@@ -20,31 +20,29 @@
  * along with this code. If not, see <https://www.gnu.org/licenses/lgpl-3.0.html>.      
  */
 
-using BH.oM.Adapter;
+using BH.oM.Base;
+using BH.oM.Base.Attributes;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace BH.Adapter.SoftwareName
+namespace BH.oM.Adapters.PowerPoint
 {
-    public partial class SoftwareNameAdapter : BHoMAdapter
+    [Description("Object description in here. Will appear in the UI tooltip.")]
+    public class ExampleObject : BHoMObject
     {
-        // This method gets called when appropriate by the Push method contained in the base Adapter class.
-        // Unlike the Create, Delete and Read, this method already exposes a simple implementation: it calls Delete and then Create.
-        // It can be overridden here keeping in mind the following:
-        // - it gets called once per each Type, and if equal objects are found;
-        // - the object equality is tested through this.AdapterComparers, that need to be implemented for each type.
-        // See the wiki for more info.
+        // // See examples in the BHoM repo and the wiki to see how we define types.
+        // // Generally, all properties should be public and have public getter and setter.
+        // // BHoM Objects should have orthogonal properties and no behaviour (no methods), as in C# Records (or Python Dataclasses).
+        // // No constructor should be specified. If a specific instantiaton method is needed, we make it as an "Engine/Create" method.
+        // // Objects created with this convention will automatically appear as UI components (e.g. Grasshopper component).
 
-        protected override bool IUpdate<T>(IEnumerable<T> objects, ActionConfig actionConfig = null)
-        {
-            return base.IUpdate(objects, actionConfig);
-        }
+        [Description("Property description in here.")]
+        public string SomeStringProperty { get; set; }
 
-        /***************************************************/
-
+        [Description("Property description in here.")]
+        public int SomeNumberProperty { get; set; }
     }
 }
 

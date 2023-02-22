@@ -20,30 +20,38 @@
  * along with this code. If not, see <https://www.gnu.org/licenses/lgpl-3.0.html>.      
  */
 
+using BH.oM.Adapter;
 using BH.oM.Base;
-using BH.oM.Base.Attributes;
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace BH.Engine.Adapters.SoftwareName
+namespace BH.Adapter.PowerPoint
 {
-    public static partial class Compute
+    public partial class PowerPointAdapter : BHoMAdapter
     {
         /***************************************************/
-        /**** Public Methods                            ****/
+        /**** Adapter overload method                   ****/
         /***************************************************/
 
-        [Description("Description of the method. Will appear in the UI tooltip.")]
-        [Input("someInput1", "Description of the input. Will appear in the UI tooltip.")]
-        [Input("someInput2", "Description of the input. Will appear in the UI tooltip.")]
-        [Output("outputName", "Description of the output. Will appear in the UI tooltip.")]
-        public static void ExampleComputeMethod(string someInput1, string someInput2)
+        // This method gets called when appropriate by the Pull method contained in the base Adapter class.
+        // It gets called once per each Type.
+        protected override IEnumerable<IBHoMObject> IRead(Type type, IList ids, ActionConfig actionConfig = null)
         {
-            // This method will appear in every UI (e.g. Grasshopper) as a component.
-            // Find it using the CTRL+Shift+B search bar, or by navigating the `Compute` component (Engine tab) right click menu.
-            throw new NotImplementedException();
+            // Preferrably, different Create logic for different object types should go in separate methods.
+            // We achieve this by using the ICreate method to only dynamically dispatching to *type-specific Create implementations*
+            // In other words:
+            // if (type == typeof(SomeType1))
+            //     return ReadSomeType1(ids as dynamic);
+            // else if (type == typeof(SomeType2))
+            //     return ReadSomeType2(ids as dynamic);
+            // else if (type == typeof(SomeType3))
+            //     return ReadSomeType3(ids as dynamic);
+
+            return new List<IBHoMObject>();
         }
 
         /***************************************************/

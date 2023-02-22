@@ -20,51 +20,34 @@
  * along with this code. If not, see <https://www.gnu.org/licenses/lgpl-3.0.html>.      
  */
 
-using BH.Adapter;
+using BH.oM.Base;
 using BH.oM.Base.Attributes;
+using BH.oM.Adapters.PowerPoint;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace BH.Adapter.SoftwareName
+namespace BH.Engine.Adapters.PowerPoint
 {
-    public partial class SoftwareNameAdapter : BHoMAdapter
+    public static partial class Modify
     {
         /***************************************************/
-        /**** Constructors                              ****/
+        /**** Public Methods                            ****/
         /***************************************************/
 
-        [Description("Adapter for SoftwareName.")]
-        [Output("The created SoftwareName adapter.")]
-        public SoftwareNameAdapter()
+        [Description("Description of the method. Will appear in the UI tooltip.")]
+        [Input("objectToModify", "Description of the input. Will appear in the UI tooltip.")]
+        [Output("outputName", "Description of the output. Will appear in the UI tooltip.")]
+        public static ExampleObject ExampleCreateMethod(ExampleObject objectToModify)
         {
-            // The Adapter constructor can be used to configure the Adapter behaviour.
-            // For example:
-            m_AdapterSettings.DefaultPushType = oM.Adapter.PushType.CreateOnly; // Adapter `Push` Action simply calls "Create" method.
-            
-            // See the wiki, the AdapterSettings object and other Adapters to see how it can be configured.
-
-            // If your toolkit needs to define this.AdapterComparers and or this.DependencyTypes,
-            // this constructor has to populate those properties.
-            // See the wiki for more information.
+            // This method will appear in every UI (e.g. Grasshopper) as a component.
+            // Find it using the CTRL+Shift+B search bar, or by navigating the `Create` component (Engine tab) right click menu.
+            throw new NotImplementedException();
         }
 
-        // You can add any other constructors that take more inputs here. 
-
-        /***************************************************/
-        /**** Private  Fields                           ****/
         /***************************************************/
 
-        // You can add any private variable that should be in common to any other adapter methods here.
-        // If you need to add some private methods, please consider first what their nature is:
-        // if a method does not need any external call (API call, connection call, etc.)
-        // we place them in the Engine project, and then reference them from the Adapter.
-        // See the wiki for more information.
-
-        /***************************************************/
     }
 }
 

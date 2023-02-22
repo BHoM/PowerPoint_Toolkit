@@ -4,13 +4,17 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <BaseOutputPath>..\Build\</BaseOutputPath>
     <AssemblyVersion>6.0.0.0</AssemblyVersion>
-    <Description>https://github.com/BHoM/SoftwareName_Toolkit</Description>
+    <Description>https://github.com/BHoM/PowerPoint_Toolkit</Description>
     <Version>5.0.0</Version>
     <Authors>BHoM</Authors>
     <Copyright>Copyright © https://github.com/BHoM</Copyright>
-    <RootNamespace>BH.oM.SoftwareName</RootNamespace>
+    <RootNamespace>BH.Engine.Adapters.PowerPoint</RootNamespace>
     <FileVersion>6.1.0.0</FileVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PowerPoint_oM\PowerPoint_oM.csproj" />
+  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="BHoM">

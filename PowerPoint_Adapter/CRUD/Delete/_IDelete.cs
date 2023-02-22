@@ -21,41 +21,31 @@
  */
 
 using BH.oM.Adapter;
-using BH.oM.Base;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BH.Adapter.SoftwareName
+namespace BH.Adapter.PowerPoint
 {
-    public partial class SoftwareNameAdapter : BHoMAdapter
+    public partial class PowerPointAdapter : BHoMAdapter
     {
-        /***************************************************/
-        /**** Adapter overload method                   ****/
-        /***************************************************/
-
-        // This method gets called when appropriate by the Pull method contained in the base Adapter class.
-        // It gets called once per each Type.
-        protected override IEnumerable<IBHoMObject> IRead(Type type, IList ids, ActionConfig actionConfig = null)
+        // Basic Delete method that deletes objects depending on their Type and Id. 
+        // It gets called by the Push or by the Remove Adapter Actions.
+        // Its implementation is facultative (not needed for a simple export/import scenario). 
+        // Toolkits need to implement (override) this only to get the full CRUD to work.
+        protected override int IDelete(Type type, IEnumerable<object> ids, ActionConfig actionConfig = null)
         {
-            // Preferrably, different Create logic for different object types should go in separate methods.
-            // We achieve this by using the ICreate method to only dynamically dispatching to *type-specific Create implementations*
-            // In other words:
-            // if (type == typeof(SomeType1))
-            //     return ReadSomeType1(ids as dynamic);
-            // else if (type == typeof(SomeType2))
-            //     return ReadSomeType2(ids as dynamic);
-            // else if (type == typeof(SomeType3))
-            //     return ReadSomeType3(ids as dynamic);
-
-            return new List<IBHoMObject>();
+            //Insert code here to enable deletion of specific types of objects with specific ids
+            BH.Engine.Base.Compute.RecordError($"Delete for objects of type {type.Name} is not implemented in {(this as dynamic).GetType().Name}.");
+            return 0;
         }
 
-        /***************************************************/
+        // There are more virtual Delete methods you might want to override and implement.
+        // Check the base BHoM_Adapter solution and the wiki for more info.
 
+        /***************************************************/
     }
 }
 
