@@ -1,4 +1,4 @@
-/*
+﻿/*
  * This file is part of the Buildings and Habitats object Model (BHoM)
  * Copyright (c) 2015 - 2023, the respective contributors. All rights reserved.
  *
@@ -20,35 +20,31 @@
  * along with this code. If not, see <https://www.gnu.org/licenses/lgpl-3.0.html>.      
  */
 
-using BH.oM.Adapters.PowerPoint;
+using BH.Adapter;
+using BH.Engine.Adapter;
+using BH.oM.Adapter;
 using BH.oM.Base;
-using BH.oM.Base.Attributes;
-using System;
+using BH.oM.Data.Requests;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
+using System.IO;
 
-namespace BH.Engine.Adapters.PowerPoint
+namespace BH.Adapter.PowerPoint
 {
-    public static partial class Create
+    public partial class PowerPointAdapter : BHoMAdapter
     {
         /***************************************************/
-        /**** Public Methods                            ****/
+        /**** Method Overrides                          ****/
         /***************************************************/
 
-        [Description("Description of the method. Will appear in the UI tooltip.")]
-        [Input("someInput1", "Description of the input. Will appear in the UI tooltip.")]
-        [Input("someInput2", "Description of the input. Will appear in the UI tooltip.")]
-        [Output("outputName", "Description of the output. Will appear in the UI tooltip.")]
-        public static ExampleObject ExampleCreateMethod(string someInput1, int someInput2)
+        public override IEnumerable<object> Pull(IRequest request = null, PullType pullOption = PullType.AdapterDefault, ActionConfig actionConfig = null)
         {
-            // This method will appear in every UI (e.g. Grasshopper) as a component.
-            // Find it using the CTRL+Shift+B search bar, or by navigating the `Create` component (Engine tab) right click menu.
-            return new ExampleObject() { SomeStringProperty = someInput1, SomeNumberProperty = someInput2 };
+            return new List<object>();
         }
 
         /***************************************************/
-
     }
 }
+
+
+
 

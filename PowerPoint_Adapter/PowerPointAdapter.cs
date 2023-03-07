@@ -25,6 +25,7 @@ using BH.oM.Base.Attributes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -37,32 +38,38 @@ namespace BH.Adapter.PowerPoint
         /**** Constructors                              ****/
         /***************************************************/
 
-        [Description("Adapter for PowerPoint.")]
-        [Output("The created PowerPoint adapter.")]
-        public PowerPointAdapter()
+        [Description("Adapter to create a new PowerPoint file based on an existing template.")]
+        [Input("templateFileSettings", "Defines the location of the template PowerPoint file.")]
+        [Output("outputFileSettings", "Defines the location of the new PowerPoint file.")]
+        public PowerPointAdapter(BH.oM.Adapter.FileSettings templateFileSettings, BH.oM.Adapter.FileSettings outputFileSettings)
         {
-            // The Adapter constructor can be used to configure the Adapter behaviour.
-            // For example:
-            m_AdapterSettings.DefaultPushType = oM.Adapter.PushType.CreateOnly; // Adapter `Push` Action simply calls "Create" method.
-            
-            // See the wiki, the AdapterSettings object and other Adapters to see how it can be configured.
+            if (templateFileSettings == null)
+            {
+                BH.Engine.Base.Compute.RecordError("Please set the File Settings to enable the Excel Adapter to work correctly.");
+                return;
+            }
 
-            // If your toolkit needs to define this.AdapterComparers and or this.DependencyTypes,
-            // this constructor has to populate those properties.
-            // See the wiki for more information.
+            if (!Path.HasExtension(templateFileSettings.FileName) || Path.GetExtension(templateFileSettings.FileName) != ".pptx")
+            {
+                BH.Engine.Base.Compute.RecordError("PowerPoint adapter supports only .pptx files.");
+                return;
+            }
+
+            m_TemplateFileSettings = templateFileSettings;
+
+            m_OutputFileSettings = outputFileSettings;
+            if (!Directory.Exists(m_OutputFileSettings.Directory))
+                Directory.CreateDirectory(m_OutputFileSettings.Directory);
         }
 
-        // You can add any other constructors that take more inputs here. 
 
         /***************************************************/
-        /**** Private  Fields                           ****/
+        /**** Private Fields                            ****/
         /***************************************************/
 
-        // You can add any private variable that should be in common to any other adapter methods here.
-        // If you need to add some private methods, please consider first what their nature is:
-        // if a method does not need any external call (API call, connection call, etc.)
-        // we place them in the Engine project, and then reference them from the Adapter.
-        // See the wiki for more information.
+        private BH.oM.Adapter.FileSettings m_TemplateFileSettings = null;
+
+        private BH.oM.Adapter.FileSettings m_OutputFileSettings = null;
 
         /***************************************************/
     }
