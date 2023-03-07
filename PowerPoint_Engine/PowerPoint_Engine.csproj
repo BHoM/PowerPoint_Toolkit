@@ -12,6 +12,14 @@
     <FileVersion>6.1.0.0</FileVersion>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>../Build</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <OutputPath>../Build</OutputPath>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\PowerPoint_oM\PowerPoint_oM.csproj" />
   </ItemGroup>
@@ -22,6 +30,13 @@
       <Private>false</Private>
       <SpecificVersion>false</SpecificVersion>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Compute\" />
+    <Folder Include="Create\" />
+    <Folder Include="Modify\" />
+    <Folder Include="Query\" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
