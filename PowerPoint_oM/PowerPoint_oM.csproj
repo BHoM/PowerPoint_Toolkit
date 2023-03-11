@@ -13,11 +13,11 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <OutputPath>../Build</OutputPath>
+    <OutputPath>..\Build\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>../Build</OutputPath>
+    <OutputPath>..\Build\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,6 +28,8 @@
     </Reference>
     <Reference Include="Excel_oM">
       <HintPath>C:\ProgramData\BHoM\Assemblies\Excel_oM.dll</HintPath>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
   </ItemGroup>
 

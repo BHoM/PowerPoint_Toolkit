@@ -15,11 +15,11 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>../Build</OutputPath>
+    <OutputPath>..\Build\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <OutputPath>../Build</OutputPath>
+    <OutputPath>..\Build\</OutputPath>
     <WarningLevel>5</WarningLevel>
   </PropertyGroup>
 
@@ -61,12 +61,18 @@
     </Reference>
     <Reference Include="Data_oM">
       <HintPath>C:\ProgramData\BHoM\Assemblies\Data_oM.dll</HintPath>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Excel_Engine">
       <HintPath>C:\ProgramData\BHoM\Assemblies\Excel_Engine.dll</HintPath>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Excel_oM">
       <HintPath>C:\ProgramData\BHoM\Assemblies\Excel_oM.dll</HintPath>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
   </ItemGroup>
 
