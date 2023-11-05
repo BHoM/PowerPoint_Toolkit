@@ -54,58 +54,99 @@ namespace BH.Adapter.PowerPoint
             if (pushType == PushType.AdapterDefault)
                 pushType = PushType.UpdateOnly;
 
-            // Make sure the file exists
-            string filePath = m_TemplateFileSettings.GetFullFileName();
-            if (!File.Exists(filePath))
+            // Copy the content of the template into a MemoryStream
+            MemoryStream memoryStream = null;
+            if (m_TemplateFileSettings != null)
+                memoryStream = OpenTemplateFile(m_TemplateFileSettings.GetFullFileName());
+            else if (m_TemplateStream != null)
             {
-                BH.Engine.Base.Compute.RecordError($"There is no presentation with the file path {filePath}");
+                memoryStream = new MemoryStream();
+                m_TemplateStream.CopyTo(memoryStream);
+            }
+
+            if (memoryStream == null)
+            {
+                BH.Engine.Base.Compute.RecordError("The content of the template was not extracted successfully.");
                 return new List<object>();
             }
 
             // Open the presentation
-            MemoryStream memoryStream = new MemoryStream();
             PresentationDocument presentationDoc = null;
             try
             {
-                FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                fileStream.CopyTo(memoryStream);
                 presentationDoc = PresentationDocument.Open(memoryStream, true);
-                fileStream.Close();
             }
             catch (Exception e)
             {
+                memoryStream.Close();
                 BH.Engine.Base.Compute.RecordError("Could not open the file: " + e.Message);
+                return new List<object>();
             }
             
+            // Update the slides
             PresentationPart presentationPart = presentationDoc.PresentationPart;
             Presentation presentation = presentationPart.Presentation;
-
             foreach (ISlideUpdate update in objects.OfType<ISlideUpdate>())
             {
                 SlidePart slidePart = GetSlide(presentationPart, update.SlideNumber - 1);
                 if (slidePart != null)
                     IUpdateSlide(slidePart, update);
-
             }
 
+            // Save the output 
             try
             {
-                presentationDoc.SaveAs(m_OutputFileSettings.GetFullFileName()); 
+                if (m_OutputFileSettings != null)
+                    presentationDoc.SaveAs(m_OutputFileSettings.GetFullFileName());
+                else if (m_OutputStream != null)
+                {
+                    presentationDoc.Clone(m_OutputStream);
+                    m_OutputStream.Position = 0;
+                }
+                    
             }
             catch (Exception e)
             {
                 BH.Engine.Base.Compute.RecordError("Could not save the changes: " + e.Message);
             }
 
+            // Release all content from memory
             presentationDoc.Close();
             memoryStream.Close();
             
-
             return objects.ToList();
         }
 
         /***************************************************/
         /**** Private Methods                           ****/
+        /***************************************************/
+
+        private MemoryStream OpenTemplateFile(string filePath)
+        {
+            // Make sure the file exists
+            if (!File.Exists(filePath))
+            {
+                BH.Engine.Base.Compute.RecordError($"There is no presentation with the file path {filePath}");
+                return null;
+            }
+
+            // Copy the template file to the memory stream
+            MemoryStream memoryStream = new MemoryStream();
+            try
+            {
+                FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                fileStream.CopyTo(memoryStream);
+                fileStream.Close();
+            }
+            catch (Exception e)
+            {
+                BH.Engine.Base.Compute.RecordError("Could not open the file: " + e.Message);
+            }
+
+            return memoryStream;
+        }
+
+
         /***************************************************/
 
         private SlidePart GetSlide(PresentationPart presentationPart, int index)

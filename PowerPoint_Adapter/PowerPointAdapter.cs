@@ -45,7 +45,7 @@ namespace BH.Adapter.PowerPoint
         {
             if (templateFileSettings == null)
             {
-                BH.Engine.Base.Compute.RecordError("Please set the File Settings to enable the Excel Adapter to work correctly.");
+                BH.Engine.Base.Compute.RecordError("Please set the File Settings for the template file to enable the PowerPoint Adapter to work correctly.");
                 return;
             }
 
@@ -62,6 +62,29 @@ namespace BH.Adapter.PowerPoint
                 Directory.CreateDirectory(m_OutputFileSettings.Directory);
         }
 
+        /***************************************************/
+
+        [Description("Adapter to create a new PowerPoint file based on an existing template.")]
+        [Input("templateStream", "Defines the content of the template PowerPoint file.")]
+        [Output("outputStream", "Defines the content of the new PowerPoint file.")]
+        public PowerPointAdapter(Stream templateStream, Stream outputStream)
+        {
+            if (templateStream == null)
+            {
+                BH.Engine.Base.Compute.RecordError("Please set the Stream for the template to enable the PowerPoint Adapter to work correctly.");
+                return;
+            }
+
+            if (outputStream == null)
+            {
+                BH.Engine.Base.Compute.RecordError("Please set the Stream for the output to enable the PowerPoint Adapter to work correctly.");
+                return;
+            }
+
+            m_TemplateStream = templateStream;
+            m_OutputStream = outputStream;
+        }
+
 
         /***************************************************/
         /**** Private Fields                            ****/
@@ -70,6 +93,10 @@ namespace BH.Adapter.PowerPoint
         private BH.oM.Adapter.FileSettings m_TemplateFileSettings = null;
 
         private BH.oM.Adapter.FileSettings m_OutputFileSettings = null;
+
+        private Stream m_TemplateStream = null;
+
+        private Stream m_OutputStream = null;
 
         /***************************************************/
     }
