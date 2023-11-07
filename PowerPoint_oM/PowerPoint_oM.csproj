@@ -26,11 +26,6 @@
       <Private>false</Private>
       <SpecificVersion>false</SpecificVersion>
     </Reference>
-    <Reference Include="Excel_oM">
-      <HintPath>C:\ProgramData\BHoM\Assemblies\Excel_oM.dll</HintPath>
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
