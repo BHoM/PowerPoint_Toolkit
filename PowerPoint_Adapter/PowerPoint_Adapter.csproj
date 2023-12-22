@@ -4,13 +4,13 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>PowerPoint_Adapter</AssemblyName>
     <BaseOutputPath>..\Build\</BaseOutputPath>
-    <AssemblyVersion>6.0.0.0</AssemblyVersion>
+    <AssemblyVersion>7.0.0.0</AssemblyVersion>
     <Description>https://github.com/BHoM/PowerPoint_Toolkit</Description>
     <Version>5.0.0</Version>
     <Authors>BHoM</Authors>
     <Copyright>Copyright © https://github.com/BHoM</Copyright>
     <RootNamespace>BH.Adapter.PowerPoint</RootNamespace>
-    <FileVersion>6.1.0.0</FileVersion>
+    <FileVersion>7.1.0.0</FileVersion>
 	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
