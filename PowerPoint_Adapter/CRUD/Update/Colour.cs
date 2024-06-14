@@ -105,8 +105,15 @@ namespace BH.Adapter.PowerPoint
                     fill.SchemeColor.Remove();
             }
 
-            //Create the RGB color
-            Drawing.RgbColorModelHex rgb = new Drawing.RgbColorModelHex() { Val = hexColour.TrimStart('#') };
+            Drawing.RgbColorModelHex rgb = fill.GetFirstChild<Drawing.RgbColorModelHex>();
+            if (rgb == null)
+            {
+                //Create the RGB color
+                rgb = new Drawing.RgbColorModelHex() { Val = hexColour.TrimStart('#') };
+                fill.Append(rgb);
+            }
+            else
+                rgb.Val = hexColour.TrimStart('#');
 
             //Check if opacity value is to be assigned
             if (opacity >= 0)
@@ -121,7 +128,7 @@ namespace BH.Adapter.PowerPoint
                 rgb.Append(alpha);
             }
 
-            fill.Append(rgb);
+
         }
 
         /***************************************************/
