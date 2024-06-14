@@ -37,6 +37,7 @@ using BH.Engine.Base;
 using BH.Engine.Geometry;
 using BH.oM.Geometry;
 
+
 namespace BH.Adapter.PowerPoint
 {
     public partial class PowerPointAdapter : BHoMAdapter
@@ -106,14 +107,24 @@ namespace BH.Adapter.PowerPoint
             if (initialOutline != null)
                 initialOutline.Remove();
 
-            for (int i = 0; i < update.Shapes.Count; i++)
+            foreach (PolylineData polylineData in update.Shapes)
             {
-                Shape newShape = shape.DeepClone();
-                Drawing.PathList pathList = newShape.ShapeProperties.Descendants<Drawing.CustomGeometry>().First().PathList;
-                var currentPaths = pathList.ChildElements.ToList();
-                currentPaths.ForEach(x => x?.Remove());
-                PolylineData polylineData = update.Shapes[i];
-                Polyline polyline = polylineData.Path;
+                shapeOwner.Append(GenerateNewShape(shape, new List<Polyline> { polylineData.Path }, polylineData.FillColour, polylineData.FillOpacity, polylineData.Thickness, polylineData.EdgeColour, polylineData.IsDashed, scaleX, scaleY, offsetX, offsetY));
+            }
+
+        }
+
+        /***************************************************/
+
+        private Shape GenerateNewShape(Shape baseShape, List<Polyline> paths, string fillColour, double fillOpacity, double edgeThickness, string edgeColour, bool isDashed, double scaleX, double scaleY, long offsetX, long offsetY)
+        {
+            Shape newShape = baseShape.DeepClone();
+            Drawing.PathList pathList = newShape.ShapeProperties.Descendants<Drawing.CustomGeometry>().First().PathList;
+            var currentPaths = pathList.ChildElements.ToList();
+            currentPaths.ForEach(x => x?.Remove());
+
+            foreach (Polyline polyline in paths)
+            {
                 Drawing.Path path = new Drawing.Path();
                 path.Append(new Drawing.MoveTo(ShapePoint(polyline.ControlPoints[0], scaleX, scaleY, offsetX, offsetY)));
                 for (int j = 1; j < polyline.ControlPoints.Count; j++)
@@ -121,48 +132,48 @@ namespace BH.Adapter.PowerPoint
                     path.Append(new Drawing.LineTo(ShapePoint(polyline.ControlPoints[j], scaleX, scaleY, offsetX, offsetY)));
                 }
 
-                if (!string.IsNullOrEmpty(polylineData.FillColour))
-                {
-                    SetFillColour(newShape.ShapeProperties, polylineData.FillColour, polylineData.FillOpacity);
-                }
-
-                var outline = newShape.ShapeProperties.GetFirstChild<Drawing.Outline>();
-                if (outline == null)
-                {
-                    outline = new Drawing.Outline();
-                    newShape.ShapeProperties.AddChild(outline);
-                }
-                else
-                {
-                    outline.Remove();
-                    outline = outline.DeepClone();
-                    newShape.ShapeProperties.AddChild(outline);
-                }
-
-                outline.Width = (int)Math.Round(polylineData.Thickness * 12700);
-                if (!string.IsNullOrEmpty(polylineData.EdgeColour))
-                {
-                    SetFillColour(outline, polylineData.EdgeColour);
-                }
-
-                if (polylineData.IsDashed)
-                {
-                    var dashed = outline.GetFirstChild<Drawing.PresetDash>();
-                    if (dashed == null)
-                    {
-                        dashed = new Drawing.PresetDash();
-                        outline.AddChild(dashed);
-                    }
-
-                    dashed.Val = Drawing.PresetLineDashValues.Dash;
-
-                }
-
                 pathList.Append(path);
-                shapeOwner.Append(newShape);
+            }
+
+            if (!string.IsNullOrEmpty(fillColour))
+            {
+                SetFillColour(newShape.ShapeProperties, fillColour, fillOpacity);
+            }
+
+            var outline = newShape.ShapeProperties.GetFirstChild<Drawing.Outline>();
+            if (outline == null)
+            {
+                outline = new Drawing.Outline();
+                newShape.ShapeProperties.AddChild(outline);
+            }
+            else
+            {
+                outline.Remove();
+                outline = outline.DeepClone();
+                newShape.ShapeProperties.AddChild(outline);
+            }
+
+            outline.Width = (int)Math.Round(edgeThickness * 12700);
+
+            if (!string.IsNullOrEmpty(edgeColour))
+            {
+                SetFillColour(outline, edgeColour);
+            }
+
+            if (isDashed)
+            {
+                var dashed = outline.GetFirstChild<Drawing.PresetDash>();
+                if (dashed == null)
+                {
+                    dashed = new Drawing.PresetDash();
+                    outline.AddChild(dashed);
+                }
+
+                dashed.Val = Drawing.PresetLineDashValues.Dash;
 
             }
 
+            return newShape;
 
         }
 
