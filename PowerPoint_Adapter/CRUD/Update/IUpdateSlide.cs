@@ -368,7 +368,7 @@ namespace BH.Adapter.PowerPoint
             var chartSeries = chart.Descendants<Drawing.Charts.SeriesText>().Select(x => x.Parent).ToList();
 
             var shapeProperties = chartSeries.Select(x => x.ChildElements.OfType<Drawing.Charts.ChartShapeProperties>().FirstOrDefault()).ToList();
-            shapeProperties.ForEach(x => x.Remove());
+            shapeProperties.ForEach(x => x?.Remove());
 
             var seriesParent = chartSeries.First().Parent;
             chartSeries.ForEach(x => x.Remove());
@@ -394,7 +394,7 @@ namespace BH.Adapter.PowerPoint
                 var serie = seriesTemplate.DeepClone();
 
                 serie.ReplaceChild(
-                    new Drawing.Charts.Index { Val = new UInt32Value((uint)i)},
+                    new Drawing.Charts.Index { Val = new UInt32Value((uint)i) },
                     serie.ChildElements.OfType<Drawing.Charts.Index>().First()
                 );
 
@@ -422,6 +422,38 @@ namespace BH.Adapter.PowerPoint
                     ),
                     serie.ChildElements.OfType<Drawing.Charts.Values>().FirstOrDefault()
                 );
+
+                if (update.CategoryColours.Count != 0)
+                {
+                    List<Drawing.Charts.DataPoint> points = serie.Elements<Drawing.Charts.DataPoint>().ToList();
+                    for (int j = 0; j < update.CategoryColours.Count && j < points.Count; j++)
+                    {
+                        Drawing.Charts.ChartShapeProperties chartProps = points[j].GetFirstChild<Drawing.Charts.ChartShapeProperties>();
+                        if (chartProps == null)
+                        {
+                            chartProps = new Drawing.Charts.ChartShapeProperties();
+                            points[j].AppendChild(chartProps);
+                        }
+                        else
+                        {
+                            chartProps.RemoveAllChildren<Drawing.NoFill>();
+                        }
+
+                        Drawing.RgbColorModelHex rgb = new Drawing.RgbColorModelHex() { Val = update.CategoryColours[j].TrimStart('#') };
+                        Drawing.SolidFill fill = chartProps.GetFirstChild<Drawing.SolidFill>();
+                        if (fill == null)
+                        {
+                            fill = new Drawing.SolidFill();
+                            chartProps.AppendChild(fill);
+                        }
+                        else
+                        {
+                            fill.RemoveAllChildren<Drawing.SchemeColor>();
+                        }
+
+                        fill.AppendChild(rgb);
+                    }
+                }
 
                 serie.AppendChild(shapeProperties[i % shapeProperties.Count].DeepClone());
 

@@ -48,6 +48,9 @@ namespace BH.oM.PowerPoint
 
         [Description("Numerical values for the chart data. There must be a list per serie and each list's length must be equal to the number of categories.")]
         public virtual List<List<double>> Data { get; set; } = new List<List<double>>();
+
+        [Description("Hex colour values corresponding to each category.")]
+        public virtual List<string> CategoryColours { get; set; } = new List<string>();
     }
 }
 
