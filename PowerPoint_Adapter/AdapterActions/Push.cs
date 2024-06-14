@@ -25,6 +25,7 @@ using BH.oM.Adapter;
 using BH.oM.Base;
 using BH.oM.Data.Collections;
 using BH.oM.PowerPoint;
+using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
 using System;
@@ -54,8 +55,14 @@ namespace BH.Adapter.PowerPoint
             if (pushType == PushType.AdapterDefault)
                 pushType = PushType.UpdateOnly;
 
-            // Copy the content of the template into a MemoryStream
+
             MemoryStream memoryStream = null;
+            PresentationDocument presentationDoc = null;
+            try
+            {
+
+            // Copy the content of the template into a MemoryStream
+
             if (m_TemplateFileSettings != null)
                 memoryStream = OpenTemplateFile(m_TemplateFileSettings.GetFullFileName());
             else if (m_TemplateStream != null)
@@ -71,7 +78,7 @@ namespace BH.Adapter.PowerPoint
             }
 
             // Open the presentation
-            PresentationDocument presentationDoc = null;
+
             try
             {
                 presentationDoc = PresentationDocument.Open(memoryStream, true);
@@ -110,9 +117,20 @@ namespace BH.Adapter.PowerPoint
                 BH.Engine.Base.Compute.RecordError("Could not save the changes: " + e.Message);
             }
 
-            // Release all content from memory
-            presentationDoc.Close();
-            memoryStream.Close();
+            }
+            finally
+            {
+                // Release all content from memory
+                if (presentationDoc != null)
+                {
+                    presentationDoc.Close();
+                }
+                if (memoryStream != null)
+                {
+                    memoryStream.Close();
+                }
+            }
+
             
             return objects.ToList();
         }
