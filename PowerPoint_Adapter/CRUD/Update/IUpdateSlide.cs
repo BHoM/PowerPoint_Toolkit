@@ -307,6 +307,66 @@ namespace BH.Adapter.PowerPoint
 
         /***************************************************/
 
+        private void UpdateSlide(SlidePart slidePart, ImageUpdateStream update)
+        {
+
+            if (update.ImageStream == null)
+            {
+                BH.Engine.Base.Compute.RecordError("Null stream provided. Unable to update image.");
+                return;
+            }
+
+            // Get the image element matching the name provided in update
+            NonVisualDrawingProperties matchingProperty = slidePart.Slide.Descendants<NonVisualDrawingProperties>()
+                .Where(x => x.Name.Value == update.ElementName)
+                .FirstOrDefault();
+
+            if (matchingProperty == null)
+            {
+                BH.Engine.Base.Compute.RecordError("Could not find the element with the name " + update.ElementName);
+                return;
+            }
+
+            Picture picture = matchingProperty.Parent?.Parent as Picture;
+            if (picture == null)
+            {
+                BH.Engine.Base.Compute.RecordError("The element with the name " + update.ElementName + " is not an image.");
+                return;
+            }
+
+            // Add the image to the PowerPoint
+            ImagePartType imageType = ImagePartType.Jpeg;
+            switch (update.ImageType.ToLower())
+            {
+                case "bmp":
+                    imageType = ImagePartType.Bmp;
+                    break;
+                case "png":
+                    imageType = ImagePartType.Png;
+                    break;
+                case "gif":
+                    imageType = ImagePartType.Gif;
+                    break;
+                case "svg":
+                    imageType = ImagePartType.Svg;
+                    break;
+            }
+
+            ImagePart imagePart = slidePart.AddImagePart(imageType);
+            imagePart.FeedData(update.ImageStream);
+
+            // Link the image element to the new image file
+            Drawing.Blip blip = picture.BlipFill?.Blip;
+            if (blip == null)
+            {
+                BH.Engine.Base.Compute.RecordError("Could not replace the image in element " + update.ElementName);
+                return;
+            }
+            blip.Embed = slidePart.GetIdOfPart(imagePart);
+        }
+
+        /***************************************************/
+
         private void UpdateSlide(SlidePart slidePart, ChartUpdate update)
         {
             // Get the chart element matching the name provided in update
