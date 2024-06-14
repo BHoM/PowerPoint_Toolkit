@@ -102,6 +102,100 @@ namespace BH.Adapter.PowerPoint
 
         /***************************************************/
 
+
+        private void UpdateSlide(SlidePart slidePart, MultiLineTextUpdate update)
+        {
+            // Get the shape element matching the name provided in update
+            NonVisualDrawingProperties matchingProperty = slidePart.Slide.Descendants<NonVisualDrawingProperties>()
+                .Where(x => x.Name.Value == update.ElementName)
+                .FirstOrDefault();
+
+            if (matchingProperty == null)
+            {
+                BH.Engine.Base.Compute.RecordError("Could not find the element with the name " + update.ElementName);
+                return;
+            }
+
+            Shape shape = matchingProperty.Parent?.Parent as Shape;
+            if (shape == null)
+            {
+                BH.Engine.Base.Compute.RecordError("The element with the name " + update.ElementName + " is not a shape.");
+                return;
+            }
+
+            // Replace the text
+            var paragraph = shape.Descendants<Drawing.Paragraph>().FirstOrDefault();
+
+
+
+            var runs = paragraph.Descendants<Drawing.Run>().ToList();
+
+
+            int textCount = update.Text.Count;
+            int runCount = runs.Count;
+
+            string fullText = "";
+            for (int i = 0; i < update.Text.Count - 1; i++)
+            {
+                fullText += update.Text[i] + Environment.NewLine;
+            }
+            fullText += update.Text[update.Text.Count - 1];
+
+            if (runs.Count == 0)
+            {
+                paragraph.AddChild(new Drawing.Run(new Drawing.Text(fullText)));
+            }
+            else
+            {
+                Drawing.Text text = runs[0].Text;
+                if (text != null)
+                    text.Text = fullText;
+                else
+                    runs.First().Text = new Drawing.Text(fullText);
+            }
+
+            for (int i = 1; i < runCount; i++)
+            {
+                runs[i].Remove();
+            }
+
+            if (!string.IsNullOrEmpty(update.Colour))
+            {
+                Drawing.RgbColorModelHex rgb = new Drawing.RgbColorModelHex() { Val = update.Colour.TrimStart('#') };
+                Drawing.RunProperties rp = shape.Descendants<Drawing.RunProperties>().FirstOrDefault();
+
+                if (rp != null)
+                {
+                    Drawing.SolidFill fill = rp.Elements<Drawing.SolidFill>().FirstOrDefault();
+                    if (fill == null)
+                    {
+                        fill = new Drawing.SolidFill();
+                        fill.Append(rgb);
+                        rp.Append(fill);
+                    }
+                    else
+                    {
+                        if (fill.SchemeColor != null)
+                            fill.SchemeColor.Remove();
+
+                        fill.AddChild(rgb);
+                    }
+                }
+                else
+                {
+                    rp = new Drawing.RunProperties();
+                    Drawing.SolidFill fill = new Drawing.SolidFill();
+                    fill.Append(rgb);
+                    rp.Append(fill);
+                    shape.AddChild(rp);
+                }
+
+
+            }
+        }
+
+        /***************************************************/
+
         private void UpdateSlide(SlidePart slidePart, ImageUpdate update)
         {
 
