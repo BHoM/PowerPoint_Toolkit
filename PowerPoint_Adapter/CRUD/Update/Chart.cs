@@ -175,24 +175,8 @@ namespace BH.Adapter.PowerPoint
                             chartProps = new Drawing.Charts.ChartShapeProperties();
                             points[j].AppendChild(chartProps);
                         }
-                        else
-                        {
-                            chartProps.RemoveAllChildren<Drawing.NoFill>();
-                        }
-
-                        Drawing.RgbColorModelHex rgb = new Drawing.RgbColorModelHex() { Val = update.CategoryColours[j].TrimStart('#') };
-                        Drawing.SolidFill fill = chartProps.GetFirstChild<Drawing.SolidFill>();
-                        if (fill == null)
-                        {
-                            fill = new Drawing.SolidFill();
-                            chartProps.AppendChild(fill);
-                        }
-                        else
-                        {
-                            fill.RemoveAllChildren<Drawing.SchemeColor>();
-                        }
-
-                        fill.AppendChild(rgb);
+                        
+                        SetFillColour(chartProps, update.CategoryColours[j]);
                     }
                 }
 

@@ -125,29 +125,7 @@ namespace BH.Adapter.PowerPoint
 
                 if (!string.IsNullOrEmpty(polylineData.FillColour))
                 {
-                    Drawing.RgbColorModelHex rgb = new Drawing.RgbColorModelHex() { Val = polylineData.FillColour.TrimStart('#') };
-                    Drawing.Alpha alpha = new Drawing.Alpha();
-                    alpha.Val = (int)Math.Round(polylineData.FillOpacity * 100000);
-                    rgb.Append(alpha);
-                    foreach (var noFill in newShape.ShapeProperties.Elements<Drawing.NoFill>())
-                    {
-                        noFill.Remove();
-                    }
-
-                    var fill = newShape.ShapeProperties.GetFirstChild<Drawing.SolidFill>();
-                    if (fill != null)
-                    {
-                        if (fill.SchemeColor != null)
-                            fill.SchemeColor.Remove();
-
-                        fill.Append(rgb);
-                    }
-                    else
-                    {
-                        fill = new Drawing.SolidFill(rgb);
-
-                        newShape.ShapeProperties.AddChild(fill);
-                    }
+                    SetFillColour(newShape.ShapeProperties, polylineData.FillColour, polylineData.FillOpacity);
                 }
 
                 var outline = newShape.ShapeProperties.GetFirstChild<Drawing.Outline>();
@@ -166,26 +144,7 @@ namespace BH.Adapter.PowerPoint
                 outline.Width = (int)Math.Round(polylineData.Thickness * 12700);
                 if (!string.IsNullOrEmpty(polylineData.EdgeColour))
                 {
-                    Drawing.RgbColorModelHex rgb = new Drawing.RgbColorModelHex() { Val = polylineData.EdgeColour.TrimStart('#') };
-                    foreach (var noFill in outline.Elements<Drawing.NoFill>())
-                    {
-                        noFill.Remove();
-                    }
-
-                    var fill = outline.GetFirstChild<Drawing.SolidFill>();
-                    if (fill != null)
-                    {
-                        if (fill.SchemeColor != null)
-                            fill.SchemeColor.Remove();
-
-                        fill.Append(rgb);
-                    }
-                    else
-                    {
-                        fill = new Drawing.SolidFill(rgb);
-
-                        outline.AddChild(fill);
-                    }
+                    SetFillColour(outline, polylineData.EdgeColour);
                 }
 
                 if (polylineData.IsDashed)

@@ -151,36 +151,14 @@ namespace BH.Adapter.PowerPoint
 
             if (!string.IsNullOrEmpty(update.Colour))
             {
-                Drawing.RgbColorModelHex rgb = new Drawing.RgbColorModelHex() { Val = update.Colour.TrimStart('#') };
                 Drawing.RunProperties rp = shape.Descendants<Drawing.RunProperties>().FirstOrDefault();
 
-                if (rp != null)
-                {
-                    Drawing.SolidFill fill = rp.Elements<Drawing.SolidFill>().FirstOrDefault();
-                    if (fill == null)
-                    {
-                        fill = new Drawing.SolidFill();
-                        fill.Append(rgb);
-                        rp.Append(fill);
-                    }
-                    else
-                    {
-                        if (fill.SchemeColor != null)
-                            fill.SchemeColor.Remove();
-
-                        fill.AddChild(rgb);
-                    }
-                }
-                else
+                if (rp == null)
                 {
                     rp = new Drawing.RunProperties();
-                    Drawing.SolidFill fill = new Drawing.SolidFill();
-                    fill.Append(rgb);
-                    rp.Append(fill);
                     shape.AddChild(rp);
                 }
-
-
+                SetFillColour(rp, update.Colour);
             }
         }
 
