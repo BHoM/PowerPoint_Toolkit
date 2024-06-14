@@ -82,22 +82,45 @@ namespace BH.Adapter.PowerPoint
         /**** Private Methods - Helpers                 ****/
         /***************************************************/
 
-        private void SetFillColour(OpenXmlElement element, string hexColour)
+        private void SetFillColour(OpenXmlElement element, string hexColour, double opacity = -1)
         {
-            element.RemoveAllChildren<Drawing.NoFill>();
+            //Remove all instances of NoFill
+            foreach (var noFill in element.Elements<Drawing.NoFill>())
+            {
+                noFill.Remove();
+            }
 
+            //Try get an existing SolidFill element out
             Drawing.SolidFill fill = element.GetFirstChild<Drawing.SolidFill>();
             if (fill == null)
             {
+                //If not present, create and add to the element
                 fill = new Drawing.SolidFill();
                 element.AppendChild(fill);
             }
             else
             {
+                //If existing, make sure any SchemeColor is removed - to be replaced by explicit RGB color
                 if (fill.SchemeColor != null)
                     fill.SchemeColor.Remove();
             }
+
+            //Create the RGB color
             Drawing.RgbColorModelHex rgb = new Drawing.RgbColorModelHex() { Val = hexColour.TrimStart('#') };
+
+            //Check if opacity value is to be assigned
+            if (opacity >= 0)
+            {
+                if (opacity > 1)
+                {
+                    BH.Engine.Base.Compute.RecordWarning("Opacity value above 1 provided. Opacity of 1 means full opacity (no transparency). Value of full opacity assumed.");
+                    opacity = 1;
+                }
+                Drawing.Alpha alpha = new Drawing.Alpha();
+                alpha.Val = (int)Math.Round(opacity * 100000);
+                rgb.Append(alpha);
+            }
+
             fill.Append(rgb);
         }
 
