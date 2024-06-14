@@ -73,15 +73,8 @@ namespace BH.Adapter.PowerPoint
 
             BoundingBox totalBox = update.Shapes.Select(x => x.Path.Bounds()).ToList().Bounds();
 
-            //Drawing.PathList pathList = shape.ShapeProperties.Descendants<Drawing.CustomGeometry>().First().PathList;
-            //var currentPaths = pathList.ChildElements.ToList();
-            //currentPaths.ForEach(x => x?.Remove());
-
             double bhWidth = totalBox.Max.X - totalBox.Min.X;
             double bhHeight = totalBox.Max.Y - totalBox.Min.Y;
-
-
-
 
             double scaleX;
             double scaleY;
@@ -101,6 +94,11 @@ namespace BH.Adapter.PowerPoint
             long offsetX = (long)Math.Round(-totalBox.Min.X * scaleX);
             long offsetY = (long)Math.Round(-totalBox.Min.Y * scaleY);
 
+            if (update.CentreShapes)
+            {
+                offsetX += (width - (long)Math.Round(bhWidth * scaleX)) / 2;
+                offsetY += (height - (long)Math.Round(bhHeight * scaleY)) / 2;
+            }
 
             var shapeOwner = shape.Parent;
             shape.Remove();
