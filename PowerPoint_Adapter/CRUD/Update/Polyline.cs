@@ -107,16 +107,26 @@ namespace BH.Adapter.PowerPoint
             if (initialOutline != null)
                 initialOutline.Remove();
 
-            foreach (PolylineData polylineData in update.Shapes)
+            if (update.GroupPolylinesWithSameProperties)
             {
-                shapeOwner.Append(GenerateNewShape(shape, new List<Polyline> { polylineData.Path }, polylineData.FillColour, polylineData.FillOpacity, polylineData.Thickness, polylineData.EdgeColour, polylineData.IsDashed, scaleX, scaleY, offsetX, offsetY));
+                foreach (var pathGroup in update.Shapes.GroupBy(x => new { x.EdgeColour, x.FillColour, x.Thickness, x.FillOpacity, x.IsDashed }))
+                {
+                    shapeOwner.Append(GenerateNewShape(shape, pathGroup.Select(x => x.Path), pathGroup.Key.FillColour, pathGroup.Key.FillOpacity, pathGroup.Key.Thickness, pathGroup.Key.EdgeColour, pathGroup.Key.IsDashed, scaleX, scaleY, offsetX, offsetY));
+                }
+            }
+            else
+            {
+                foreach (PolylineData polylineData in update.Shapes)
+                {
+                    shapeOwner.Append(GenerateNewShape(shape, new List<Polyline> { polylineData.Path }, polylineData.FillColour, polylineData.FillOpacity, polylineData.Thickness, polylineData.EdgeColour, polylineData.IsDashed, scaleX, scaleY, offsetX, offsetY));
+                }
             }
 
         }
 
         /***************************************************/
 
-        private Shape GenerateNewShape(Shape baseShape, List<Polyline> paths, string fillColour, double fillOpacity, double edgeThickness, string edgeColour, bool isDashed, double scaleX, double scaleY, long offsetX, long offsetY)
+        private Shape GenerateNewShape(Shape baseShape, IEnumerable<Polyline> paths, string fillColour, double fillOpacity, double edgeThickness, string edgeColour, bool isDashed, double scaleX, double scaleY, long offsetX, long offsetY)
         {
             Shape newShape = baseShape.DeepClone();
             Drawing.PathList pathList = newShape.ShapeProperties.Descendants<Drawing.CustomGeometry>().First().PathList;

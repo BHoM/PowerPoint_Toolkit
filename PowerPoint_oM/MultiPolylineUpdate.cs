@@ -41,11 +41,14 @@ namespace BH.oM.PowerPoint
         [Description("Shape to be updated.")]
         public virtual List<PolylineData> Shapes { get; set; } = new List<PolylineData>();
 
-        [Description("If true, the shprovided shapes are centred in the template box, if false, the shapes are drawn from the top left corner.")]
+        [Description("If true, the provided shapes are centred in the template box, if false, the shapes are drawn from the top left corner.")]
         public virtual bool CentreShapes { get; set; } = true;
 
         [Description("If true, the shape aspect ratio is kept, and the shapes are made to fit the extents of the template shape. If false, the shapes are atempted to fill up the template shape as much as possible which can lead to change in aspect ratio of the provided shapes.")]
         public virtual bool KeepShapeAspectRatio { get; set; } = true;
+
+        [Description("If true, the provided shapes that share all properties in terms of colours will be added to the same shape object. If false, all PolylineData obejcts will be added to separate shape objects.")]
+        public virtual bool GroupPolylinesWithSameProperties { get; set; } = false;
     }
 }
 
