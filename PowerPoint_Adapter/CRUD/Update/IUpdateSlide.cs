@@ -196,6 +196,47 @@ namespace BH.Adapter.PowerPoint
 
         /***************************************************/
 
+        private void UpdateSlide(SlidePart slidePart, ShapeColourUpdate update)
+        {
+            // Get the shape element matching the name provided in update
+            NonVisualDrawingProperties matchingProperty = slidePart.Slide.Descendants<NonVisualDrawingProperties>()
+                .Where(x => x.Name.Value == update.ElementName)
+                .FirstOrDefault();
+
+            if (matchingProperty == null)
+            {
+                BH.Engine.Base.Compute.RecordError("Could not find the element with the name " + update.ElementName);
+                return;
+            }
+
+            Shape shape = matchingProperty.Parent?.Parent as Shape;
+            if (shape == null)
+            {
+                BH.Engine.Base.Compute.RecordError("The element with the name " + update.ElementName + " is not a shape.");
+                return;
+            }
+
+            // Replace the colours
+            if (!string.IsNullOrEmpty(update.EdgeColour))
+            {
+                //TODO
+            }
+            if (!string.IsNullOrEmpty(update.FillColour))
+            {
+                var fill = shape.ShapeProperties.Elements<Drawing.SolidFill>().FirstOrDefault();
+                if (fill != null)
+                {
+                    if (fill.SchemeColor != null)
+                        fill.SchemeColor.Remove();
+
+                    Drawing.RgbColorModelHex rgb = new Drawing.RgbColorModelHex() { Val = update.FillColour.TrimStart('#') };
+                    fill.Append(rgb);
+                }
+            }
+        }
+
+        /***************************************************/
+
         private void UpdateSlide(SlidePart slidePart, ImageUpdate update)
         {
 
