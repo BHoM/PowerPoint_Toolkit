@@ -66,6 +66,11 @@ namespace BH.Adapter.PowerPoint
                     objects = objects.Where(x => typeof(ISlideCreate).IsAssignableFrom(x.GetType()));
                     break;
             }
+            else
+            {
+                BH.Engine.Base.Compute.RecordError("There was no template file settings or stream provided to extract from.");
+                return new List<object>();
+            }
 
             // PresentationDocument.Open throws an ArgumentNullException if the input stream is null, which is possible as GetTemplateMemoryStream can return null. If this is found to be bad UX, we could combine these two using blocks into one, where the exception is caught and discarded instead, leaving the BHoM error from GetTemplateMemoryStream as the only error.
             using (PresentationDocument presentationDoc = GetTemplateDocument())
