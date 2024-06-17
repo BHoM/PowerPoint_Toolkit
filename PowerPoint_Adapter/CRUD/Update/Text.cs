@@ -115,11 +115,7 @@ namespace BH.Adapter.PowerPoint
 
             // Replace the text
             var paragraph = shape.Descendants<Drawing.Paragraph>().FirstOrDefault();
-
-
-
             var runs = paragraph.Descendants<Drawing.Run>().ToList();
-
 
             int textCount = update.Text.Count;
             int runCount = runs.Count;
@@ -142,6 +138,10 @@ namespace BH.Adapter.PowerPoint
                     text.Text = fullText;
                 else
                     runs.First().Text = new Drawing.Text(fullText);
+
+                Drawing.RunProperties runProps = runs[0].RunProperties;
+                if (runProps != null)
+                    runProps.SpellingError = null;  //Make sure no spelling error underlines are left from template
             }
 
             for (int i = 1; i < runCount; i++)
