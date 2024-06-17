@@ -21,6 +21,7 @@
  */
 
 using BH.Engine.Adapter;
+using BH.Engine.Base;
 using BH.oM.Adapter;
 using BH.oM.Base;
 using BH.oM.Data.Collections;
@@ -28,6 +29,7 @@ using BH.oM.PowerPoint;
 using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
+using DocumentFormat.OpenXml.Validation;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -49,11 +51,20 @@ namespace BH.Adapter.PowerPoint
                 BH.Engine.Base.Compute.RecordError("No objects were provided for Push action.");
                 return new List<object>();
             }
-            objects = objects.Where(x => x != null).ToList();
 
-            // If unset, set the pushType to AdapterSettings' value (base AdapterSettings default is FullCRUD).
-            if (pushType == PushType.AdapterDefault)
-                pushType = PushType.UpdateOnly;
+            objects = objects.Where(x => x != null);
+
+            // Filter out objects based on the push type given
+            switch (pushType)
+            {
+                case PushType.UpdateOnly:
+                    objects = objects.Where(x => typeof(ISlideUpdate).IsAssignableFrom(x.GetType()));
+                    break;
+                case PushType.CreateNonExisting:
+                case PushType.CreateOnly:
+                    objects = objects.Where(x => typeof(ISlideCreate).IsAssignableFrom(x.GetType()));
+                    break;
+            }
 
 
             MemoryStream memoryStream = null;
@@ -69,6 +80,11 @@ namespace BH.Adapter.PowerPoint
             {
                 memoryStream = new MemoryStream();
                 m_TemplateStream.CopyTo(memoryStream);
+            }
+            else
+            {
+                BH.Engine.Base.Compute.RecordError("There was no template file settings or stream provided to extract from.");
+                return new List<object>();
             }
 
             if (memoryStream == null)
@@ -90,27 +106,40 @@ namespace BH.Adapter.PowerPoint
                 return new List<object>();
             }
             
-            // Update the slides
+            // Get the presentation part and the presentation.
             PresentationPart presentationPart = presentationDoc.PresentationPart;
             Presentation presentation = presentationPart.Presentation;
-            foreach (ISlideUpdate update in objects.OfType<ISlideUpdate>())
+            
+            // Update/create slides based upon given actions.
+            foreach (object action in objects)
             {
-                SlidePart slidePart = GetSlide(presentationPart, update.SlideNumber - 1);
-                if (slidePart != null)
-                    IUpdateSlide(slidePart, update);
+                switch (action)
+                {
+                    case ISlideUpdate update:
+                        SlidePart slidePart = GetSlide(presentationPart, update.SlideNumber - 1);
+                        if (slidePart != null)
+                            IUpdateSlide(slidePart, update);
+                        break;
+                    case ISlideCreate create:
+                        ICreateSlide(presentationPart, create as SlideCreate);
+                        break;
+                }
             }
+
+            OpenXmlValidator validator = new OpenXmlValidator();
+
+            var errors = validator.Validate(presentationDoc);
 
             // Save the output 
             try
             {
                 if (m_OutputFileSettings != null)
-                    presentationDoc.Clone(m_OutputFileSettings.GetFullFileName());
+                    presentationDoc.Clone(m_OutputFileSettings.GetFullFileName()).Dispose();
                 else if (m_OutputStream != null)
                 {
-                    presentationDoc.Clone(m_OutputStream);
+                    presentationDoc.Clone(m_OutputStream).Close();
                     m_OutputStream.Position = 0;
                 }
-                    
             }
             catch (Exception e)
             {
