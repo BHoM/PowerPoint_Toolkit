@@ -72,6 +72,15 @@ namespace BH.Adapter.PowerPoint
             long width = shape.ShapeProperties.Transform2D.Extents.Cx;
             long height = shape.ShapeProperties.Transform2D.Extents.Cy;
 
+            update = update.ShallowClone();
+            //Mirrors the shape around the XZ plane.
+            //This is done to acountfor the fact that (0,0) in powerpoint is top left, and (0,0) in bottom left
+            for (int i = 0; i < update.Shapes.Count; i++)
+            {
+                update.Shapes[i] = update.Shapes[i].ShallowClone();
+                update.Shapes[i].Path = update.Shapes[i].Path.Mirror(Plane.XZ);
+            }
+
             BoundingBox totalBox = update.Shapes.Select(x => x.Path.Bounds()).ToList().Bounds();
 
             double bhWidth = totalBox.Max.X - totalBox.Min.X;
