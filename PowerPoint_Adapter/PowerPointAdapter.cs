@@ -40,7 +40,8 @@ namespace BH.Adapter.PowerPoint
 
         [Description("Adapter to create a new PowerPoint file based on an existing template.")]
         [Input("templateFileSettings", "Defines the location of the template PowerPoint file.")]
-        [Output("outputFileSettings", "Defines the location of the new PowerPoint file.")]
+        [Input("outputFileSettings", "Defines the location of the new PowerPoint file.")]
+        [Output("adapter", "The resultant PowerPointAdapter.")]
         public PowerPointAdapter(BH.oM.Adapter.FileSettings templateFileSettings, BH.oM.Adapter.FileSettings outputFileSettings)
         {
             if (templateFileSettings == null)
@@ -66,7 +67,8 @@ namespace BH.Adapter.PowerPoint
 
         [Description("Adapter to create a new PowerPoint file based on an existing template.")]
         [Input("templateStream", "Defines the content of the template PowerPoint file.")]
-        [Output("outputStream", "Defines the content of the new PowerPoint file.")]
+        [Input("outputStream", "Defines the content of the new PowerPoint file.")]
+        [Output("adapter", "The resultant PowerPointAdapter.")]
         public PowerPointAdapter(Stream templateStream, Stream outputStream)
         {
             if (templateStream == null)

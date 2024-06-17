@@ -20,7 +20,7 @@ namespace BH.Adapter.PowerPoint
                 presentationPart.Presentation.SlideIdList = slideIDList;
             }
 
-            uint newID = slideIDList.ChildElements.Count() == 0 ? 256 : slideIDList.GetMaxSlideID();
+            uint newID = slideIDList.ChildElements.Count() == 0 ? 256 : slideIDList.GetMaxSlideID() + 1;
 
             if (slideIndex < 0 || slideIndex >= slideIDList.Count())
             {

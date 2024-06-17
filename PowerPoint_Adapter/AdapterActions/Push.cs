@@ -21,6 +21,7 @@
  */
 
 using BH.Engine.Adapter;
+using BH.Engine.Base;
 using BH.oM.Adapter;
 using BH.oM.Base;
 using BH.oM.Data.Collections;
@@ -28,6 +29,7 @@ using BH.oM.PowerPoint;
 using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
+using DocumentFormat.OpenXml.Validation;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -49,11 +51,20 @@ namespace BH.Adapter.PowerPoint
                 BH.Engine.Base.Compute.RecordError("No objects were provided for Push action.");
                 return new List<object>();
             }
-            objects = objects.Where(x => x != null).ToList();
 
-            // If unset, set the pushType to AdapterSettings' value (base AdapterSettings default is FullCRUD).
-            if (pushType == PushType.AdapterDefault)
-                pushType = PushType.UpdateOnly;
+            objects = objects.Where(x => x != null);
+
+            // Filter out objects based on the push type given
+            switch (pushType)
+            {
+                case PushType.UpdateOnly:
+                    objects = objects.Where(x => typeof(ISlideUpdate).IsAssignableFrom(x.GetType()));
+                    break;
+                case PushType.CreateNonExisting:
+                case PushType.CreateOnly:
+                    objects = objects.Where(x => typeof(ISlideCreate).IsAssignableFrom(x.GetType()));
+                    break;
+            }
 
 
             MemoryStream memoryStream = null;
@@ -91,13 +102,22 @@ namespace BH.Adapter.PowerPoint
                 // Update the slides
                 PresentationPart presentationPart = presentationDoc.PresentationPart;
                 Presentation presentation = presentationPart.Presentation;
-                foreach (ISlideUpdate update in objects.OfType<ISlideUpdate>())
+                // Update/create slides based upon given actions.
+                foreach (object action in objects)
                 {
-                    SlidePart slidePart = GetSlide(presentationPart, update.SlideNumber - 1);
-                    if (slidePart != null)
-                        IUpdateSlide(slidePart, update);
+                    switch (action)
+                    {
+                        case ISlideUpdate update:
+                            SlidePart slidePart = GetSlide(presentationPart, update.SlideNumber - 1);
+                            if (slidePart != null)
+                                IUpdateSlide(slidePart, update);
+                            break;
+                        case ISlideCreate create:
+                            ICreateSlide(presentationPart, create as SlideCreate);
+                            break;
+                    }
                 }
-
+            
                 //Handle slide deletion
                 var slideDeletes = objects.OfType<DeleteSlides>().ToList();
                 if (slideDeletes.Any())
@@ -139,9 +159,9 @@ namespace BH.Adapter.PowerPoint
             return objects.ToList();
         }
 
-        /***************************************************/
-        /**** Private Methods                           ****/
-        /***************************************************/
+            /***************************************************/
+            /**** Private Methods                           ****/
+            /***************************************************/
 
         private MemoryStream OpenTemplateFile(string filePath)
         {

@@ -11,17 +11,14 @@ namespace BH.Adapter.PowerPoint
 {
     public partial class PowerPointAdapter: BHoMAdapter
     {
-        public void CreateSlide(PresentationPart presentationPart, SlideCreate command)
+        public void ICreateSlide(PresentationPart presentationPart, ISlideCreate create)
         {
-            SlideMasterPart slideMasterPart;
+            CreateSlide(presentationPart, create as dynamic);
+        }
 
-            if (command.SlideMasterName.IsNullOrEmpty())
-            {
-                BH.Engine.Base.Compute.RecordNote("The slide master name was empty, using the first master.");
-                slideMasterPart = presentationPart.SlideMasterParts.FirstOrDefault();
-            }
-            else
-                slideMasterPart = presentationPart.SlideMasterParts.SingleOrDefault(mp => mp.SlideMaster.CommonSlideData.Name.Value.Equals(command.SlideMasterName, StringComparison.OrdinalIgnoreCase));
+        private void CreateSlide(PresentationPart presentationPart, SlideCreate create)
+        {
+            SlideMasterPart slideMasterPart = presentationPart.SlideMasterParts.FirstOrDefault();
 
             if (slideMasterPart == null)
             {
@@ -29,11 +26,11 @@ namespace BH.Adapter.PowerPoint
                 return;
             }
 
-            SlideLayoutPart slideLayoutPart = slideMasterPart.SlideLayoutParts.SingleOrDefault(sl => sl.SlideLayout.CommonSlideData.Name.Value.Equals(command.LayoutName, StringComparison.OrdinalIgnoreCase));
+            SlideLayoutPart slideLayoutPart = slideMasterPart.SlideLayoutParts.SingleOrDefault(sl => sl.SlideLayout.CommonSlideData.Name.Value.Equals(create.LayoutName, StringComparison.OrdinalIgnoreCase));
 
             if (slideLayoutPart == null)
             {
-                BH.Engine.Base.Compute.RecordError($"The slide layout ({command.LayoutName}) could not be found in the master.");
+                BH.Engine.Base.Compute.RecordError($"The slide layout ({create.LayoutName}) could not be found in the master.");
                 return;
             }
 
@@ -52,7 +49,12 @@ namespace BH.Adapter.PowerPoint
 
             // Insert the slide at the position given.
             string id = slideMasterPart.GetIdOfPart(slideLayoutPart);
-            presentationPart.SetSlideID(slidePart, command.SlideIndex);
+            presentationPart.SetSlideID(slidePart, create.SlideIndex);
+        }
+
+        private void CreateSlide(PresentationPart presentationPart, ISlideCreate create)
+        {
+            BH.Engine.Base.Compute.RecordError($"Objects of type {create.GetType().FullName} are not currently supported for creating slides.");
         }
     }
 }
