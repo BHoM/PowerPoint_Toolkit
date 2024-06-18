@@ -108,12 +108,12 @@ namespace BH.Adapter.PowerPoint
                     switch (action)
                     {
                         case ISlideUpdate update:
-                            SlidePart slidePart = GetSlide(presentationPart, update.SlideNumber - 1);
+                            SlidePart slidePart = GetSlide(presentationDoc.PresentationPart, update.SlideNumber - 1);
                             if (slidePart != null)
                                 IUpdateSlide(slidePart, update);
                             break;
                         case ISlideCreate create:
-                            ICreateSlide(presentationPart, create);
+                            ICreateSlide(presentationDoc.PresentationPart, create);
                             break;
                     }
                 }
@@ -132,6 +132,13 @@ namespace BH.Adapter.PowerPoint
                         deleteSlide = slideDeletes[0];
                     DeleteSlides(presentationPart, deleteSlide);
                 }
+
+                // Check validation of document, and throw warning if there are any errors, as they may still be recovered in powerpoint.
+                OpenXmlValidator validator = new OpenXmlValidator();
+                var errors = validator.Validate(presentationDoc);
+
+                if (errors.Any())
+                    BH.Engine.Base.Compute.RecordWarning($"There are some ({errors.Count()}) validation errors in the presentation caused by the some of the changes made in this push. The presentation may still be recoverable in PowerPoint, though some elements may have been affected.");
 
                 // Save the output 
                 try
