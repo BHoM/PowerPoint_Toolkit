@@ -13,6 +13,6 @@ namespace BH.oM.PowerPoint
         public virtual string LayoutName { get; set; } = "";
 
         [Description("The location to place the slide in the presentation, starting from 0. Use -1 to append the slide to the end of the presentation.")]
-        public virtual int SlideIndex { get; set; } = -1;
+        public virtual int SlideNumber { get; set; } = -1;
     }
 }

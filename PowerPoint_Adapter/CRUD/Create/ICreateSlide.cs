@@ -49,7 +49,7 @@ namespace BH.Adapter.PowerPoint
 
             // Insert the slide at the position given.
             string id = slideMasterPart.GetIdOfPart(slideLayoutPart);
-            presentationPart.SetSlideID(slidePart, create.SlideIndex);
+            presentationPart.SetSlideID(slidePart, create.SlideNumber - 1);
         }
 
         private void CreateSlide(PresentationPart presentationPart, ISlideCreate create)

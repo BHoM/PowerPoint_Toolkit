@@ -66,107 +66,84 @@ namespace BH.Adapter.PowerPoint
                     break;
             }
 
-
-            MemoryStream memoryStream = null;
-            PresentationDocument presentationDoc = null;
-            try
+            using (MemoryStream memoryStream = GetTemplateMemoryStream())
+            using (PresentationDocument presentationDoc = PresentationDocument.Open(memoryStream, true))
             {
-
-            // Copy the content of the template into a MemoryStream
-
-            if (m_TemplateFileSettings != null)
-                memoryStream = OpenTemplateFile(m_TemplateFileSettings.GetFullFileName());
-            else if (m_TemplateStream != null)
-            {
-                memoryStream = new MemoryStream();
-                m_TemplateStream.CopyTo(memoryStream);
-            }
-            else
-            {
-                BH.Engine.Base.Compute.RecordError("There was no template file settings or stream provided to extract from.");
-                return new List<object>();
-            }
-
-            if (memoryStream == null)
-            {
-                BH.Engine.Base.Compute.RecordError("The content of the template was not extracted successfully.");
-                return new List<object>();
-            }
-
-            // Open the presentation
-
-            try
-            {
-                presentationDoc = PresentationDocument.Open(memoryStream, true);
-            }
-            catch (Exception e)
-            {
-                memoryStream.Close();
-                BH.Engine.Base.Compute.RecordError("Could not open the file: " + e.Message);
-                return new List<object>();
-            }
+                // Ensure the streams are not null
+                if (memoryStream == null)
+                {
+                    BH.Engine.Base.Compute.RecordError("The content of the template was not extracted successfully.");
+                    return new List<object>();
+                }
+                else if (presentationDoc == null)
+                {
+                    BH.Engine.Base.Compute.RecordError("The presentation document could not be opened correctly.");
+                    return new List<object>();
+                }
             
-            // Get the presentation part and the presentation.
-            PresentationPart presentationPart = presentationDoc.PresentationPart;
-            Presentation presentation = presentationPart.Presentation;
-            
-            // Update/create slides based upon given actions.
-            foreach (object action in objects)
-            {
-                switch (action)
+                // Get the presentation part and the presentation.
+                PresentationPart presentationPart = presentationDoc.PresentationPart;
+                Presentation presentation = presentationPart.Presentation;
+
+                // Update/create slides based upon given actions.
+                foreach (object action in objects)
                 {
-                    case ISlideUpdate update:
-                        SlidePart slidePart = GetSlide(presentationPart, update.SlideNumber - 1);
-                        if (slidePart != null)
-                            IUpdateSlide(slidePart, update);
-                        break;
-                    case ISlideCreate create:
-                        ICreateSlide(presentationPart, create as SlideCreate);
-                        break;
+                    switch (action)
+                    {
+                        case ISlideUpdate update:
+                            SlidePart slidePart = GetSlide(presentationPart, update.SlideNumber - 1);
+                            if (slidePart != null)
+                                IUpdateSlide(slidePart, update);
+                            break;
+                        case ISlideCreate create:
+                            ICreateSlide(presentationPart, create);
+                            break;
+                    }
+                }
+
+                OpenXmlValidator validator = new OpenXmlValidator();
+                var errors = validator.Validate(presentationDoc);
+
+                if (errors.Any())
+                    BH.Engine.Base.Compute.RecordWarning($"There are some ({errors.Count()}) validation errors in the presentation caused by the some of the changes made in this push. The presentation may still be recoverable in PowerPoint, though some elements may have been affected.");
+
+                // Save the output
+                try
+                {
+                    if (m_OutputFileSettings != null)
+                        presentationDoc.Clone(m_OutputFileSettings.GetFullFileName()).Dispose();
+                    else if (m_OutputStream != null)
+                    {
+                        presentationDoc.Clone(m_OutputStream);
+                        m_OutputStream.Position = 0;
+                    }
+                }
+                catch (Exception e)
+                {
+                    BH.Engine.Base.Compute.RecordError("Could not save the changes: " + e.Message);
                 }
             }
 
-            OpenXmlValidator validator = new OpenXmlValidator();
-
-            var errors = validator.Validate(presentationDoc);
-
-            // Save the output 
-            try
-            {
-                if (m_OutputFileSettings != null)
-                    presentationDoc.Clone(m_OutputFileSettings.GetFullFileName()).Dispose();
-                else if (m_OutputStream != null)
-                {
-                    presentationDoc.Clone(m_OutputStream).Close();
-                    m_OutputStream.Position = 0;
-                }
-            }
-            catch (Exception e)
-            {
-                BH.Engine.Base.Compute.RecordError("Could not save the changes: " + e.Message);
-            }
-
-            }
-            finally
-            {
-                // Release all content from memory
-                if (presentationDoc != null)
-                {
-                    presentationDoc.Dispose();
-                }
-                if (memoryStream != null)
-                {
-                    memoryStream.Close();
-                }
-            }
-
-            
             return objects.ToList();
         }
 
         /***************************************************/
         /**** Private Methods                           ****/
         /***************************************************/
+
+        private MemoryStream GetTemplateMemoryStream()
+        {
+            if (m_TemplateFileSettings != null)
+                return OpenTemplateFile(m_TemplateFileSettings.GetFullFileName());
+            else if (m_TemplateStream != null)
+            {
+                MemoryStream memoryStream = new MemoryStream();
+                m_TemplateStream.CopyTo(memoryStream);
+                return memoryStream;
+            }
+            else
+                return null;
+        }
 
         private MemoryStream OpenTemplateFile(string filePath)
         {
@@ -181,18 +158,17 @@ namespace BH.Adapter.PowerPoint
             MemoryStream memoryStream = new MemoryStream();
             try
             {
-                FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                fileStream.CopyTo(memoryStream);
-                fileStream.Close();
+                using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    fileStream.CopyTo(memoryStream);
             }
             catch (Exception e)
             {
-                BH.Engine.Base.Compute.RecordError("Could not open the file: " + e.Message);
+                BH.Engine.Base.Compute.RecordError(e, "An error occurred while opening the template file.");
+                return null;
             }
 
             return memoryStream;
         }
-
 
         /***************************************************/
 
@@ -201,7 +177,7 @@ namespace BH.Adapter.PowerPoint
             var slideIds = presentationPart.Presentation.SlideIdList.ChildElements;
             if (index > slideIds.Count)
             {
-                BH.Engine.Base.Compute.RecordError($"The slide index is too high. There are only {slideIds.Count} in the presentation.");
+                BH.Engine.Base.Compute.RecordError($"The slide index is too high. There are only {slideIds.Count} slides in the presentation.");
                 return null;
             }
 
@@ -215,7 +191,3 @@ namespace BH.Adapter.PowerPoint
         /***************************************************/
     }
 }
-
-
-
-

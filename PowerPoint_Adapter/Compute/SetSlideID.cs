@@ -24,7 +24,7 @@ namespace BH.Adapter.PowerPoint
 
             if (slideIndex < 0 || slideIndex >= slideIDList.Count())
             {
-                BH.Engine.Base.Compute.RecordNote($"The slide index ({slideIndex}) was outside the range of slides ({slideIDList.Count()}). Appending the slide to the end of the presentation.");
+                BH.Engine.Base.Compute.RecordNote($"The slide number ({slideIndex + 1}) was outside the range of slides ({slideIDList.Count()}). Appending the slide to the end of the presentation.");
                 SlideId slideID = new SlideId() { Id = newID, RelationshipId = presentationPart.GetIdOfPart(slidePart) };
                 slideIDList.AppendChild(slideID);
             }
