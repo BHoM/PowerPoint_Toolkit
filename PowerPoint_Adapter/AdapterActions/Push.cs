@@ -66,41 +66,27 @@ namespace BH.Adapter.PowerPoint
                     break;
             }
 
+            // PresentationDocument.Open throws an ArgumentNullException if the input stream is null, which is possible as GetTemplateMemoryStream can return null. If this is found to be bad UX, we could combine these two using blocks into one, where the exception is caught and discarded instead, leaving the BHoM error from GetTemplateMemoryStream as the only error.
             using (MemoryStream memoryStream = GetTemplateMemoryStream())
             using (PresentationDocument presentationDoc = PresentationDocument.Open(memoryStream, true))
             {
-                // Ensure the streams are not null
-                if (memoryStream == null)
-                {
-                    BH.Engine.Base.Compute.RecordError("The content of the template was not extracted successfully.");
-                    return new List<object>();
-                }
-                else if (presentationDoc == null)
-                {
-                    BH.Engine.Base.Compute.RecordError("The presentation document could not be opened correctly.");
-                    return new List<object>();
-                }
-            
-                // Get the presentation part and the presentation.
-                PresentationPart presentationPart = presentationDoc.PresentationPart;
-                Presentation presentation = presentationPart.Presentation;
-
                 // Update/create slides based upon given actions.
                 foreach (object action in objects)
                 {
                     switch (action)
                     {
                         case ISlideUpdate update:
-                            SlidePart slidePart = GetSlide(presentationPart, update.SlideNumber - 1);
+                            SlidePart slidePart = GetSlide(presentationDoc.PresentationPart, update.SlideNumber - 1);
                             if (slidePart != null)
                                 IUpdateSlide(slidePart, update);
                             break;
                         case ISlideCreate create:
-                            ICreateSlide(presentationPart, create);
+                            ICreateSlide(presentationDoc.PresentationPart, create);
                             break;
                     }
                 }
 
+                // Check validation of document, and throw warning if there are any errors, as they may still be recovered in powerpoint.
                 OpenXmlValidator validator = new OpenXmlValidator();
                 var errors = validator.Validate(presentationDoc);
 
@@ -118,9 +104,10 @@ namespace BH.Adapter.PowerPoint
                         m_OutputStream.Position = 0;
                     }
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
-                    BH.Engine.Base.Compute.RecordError("Could not save the changes: " + e.Message);
+                    BH.Engine.Base.Compute.RecordError(ex, "An error occurred while trying to save the presentation:");
+                    return new List<object>();
                 }
             }
 
@@ -142,7 +129,10 @@ namespace BH.Adapter.PowerPoint
                 return memoryStream;
             }
             else
+            {
+                BH.Engine.Base.Compute.RecordError("Neither a template file settings or template stream could be found.");
                 return null;
+            }
         }
 
         private MemoryStream OpenTemplateFile(string filePath)
@@ -161,9 +151,9 @@ namespace BH.Adapter.PowerPoint
                 using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     fileStream.CopyTo(memoryStream);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                BH.Engine.Base.Compute.RecordError(e, "An error occurred while opening the template file.");
+                BH.Engine.Base.Compute.RecordError(ex, "An error occurred while opening the template file:");
                 return null;
             }
 

@@ -20,10 +20,11 @@ namespace BH.Adapter.PowerPoint
         {
             SlideMasterPart slideMasterPart;
 
+            // Get the slide master, and retreive the layout from the master.
             if (create.SlideMasterName.IsNullOrEmpty())
                 slideMasterPart = presentationPart.SlideMasterParts.FirstOrDefault();
             else
-                slideMasterPart = presentationPart.SlideMasterParts.Single(sm => sm.ThemePart.Theme.Name.Value.Equals(create.SlideMasterName, StringComparison.OrdinalIgnoreCase));
+                slideMasterPart = presentationPart.SlideMasterParts.SingleOrDefault(sm => sm.ThemePart.Theme.Name.Value.Equals(create.SlideMasterName, StringComparison.OrdinalIgnoreCase));
 
             if (slideMasterPart == null)
             {
@@ -53,13 +54,12 @@ namespace BH.Adapter.PowerPoint
                 slidePart.Slide.CommonSlideData.ShapeTree.RemoveChild(picture);
 
             // Insert the slide at the position given.
-            string id = slideMasterPart.GetIdOfPart(slideLayoutPart);
             presentationPart.SetSlideID(slidePart, create.SlideNumber - 1);
         }
 
         private void CreateSlide(PresentationPart presentationPart, ISlideCreate create)
         {
-            BH.Engine.Base.Compute.RecordError($"Objects of type {create.GetType().FullName} are not currently supported for creating slides.");
+            BH.Engine.Base.Compute.RecordError($"Objects of type {create.GetType().FullName} are not currently supported for use in the PowerPointAdapter.");
         }
     }
 }
