@@ -113,7 +113,7 @@ namespace BH.Adapter.PowerPoint
                                 IUpdateSlide(slidePart, update);
                             break;
                         case ISlideCreate create:
-                            ICreateSlide(presentationPart, create as SlideCreate);
+                            ICreateSlide(presentationPart, create);
                             break;
                     }
                 }
@@ -195,7 +195,7 @@ namespace BH.Adapter.PowerPoint
             var slideIds = presentationPart.Presentation.SlideIdList.ChildElements;
             if (index > slideIds.Count)
             {
-                BH.Engine.Base.Compute.RecordError($"The slide index is too high. There are only {slideIds.Count} in the presentation.");
+                BH.Engine.Base.Compute.RecordError($"The slide index is too high. There are only {slideIds.Count} slides in the presentation.");
                 return null;
             }
 

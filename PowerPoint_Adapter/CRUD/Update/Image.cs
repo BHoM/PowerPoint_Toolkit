@@ -60,28 +60,26 @@ namespace BH.Adapter.PowerPoint
                 return;
             }
 
-            Picture picture = matchingProperty.Parent?.Parent as Picture;
-            if (picture == null)
-            {
-                BH.Engine.Base.Compute.RecordError("The element with the name " + update.ElementName + " is not an image.");
-                return;
-            }
+            Picture picture;
 
-            // Read the image file
-            FileStream stream;
-            try
+            switch (matchingProperty.Parent?.Parent)
             {
-                stream = File.OpenRead(update.ImageFilePath);
-            }
-            catch (Exception e)
-            {
-                BH.Engine.Base.Compute.RecordError("The image could not be opened: " + e.Message);
-                return;
+                case Picture oldPicture:
+                    picture = oldPicture;
+                    break;
+                case Shape oldShape:
+                    picture = ConvertShapeToPicture(oldShape);
+                    slidePart.Slide.CommonSlideData.ShapeTree.ReplaceChild(picture, oldShape);
+                    break;
+                default:
+                    BH.Engine.Base.Compute.RecordError($"The element with name '{update.ElementName}' must be either a Shape or a Picture to be updated with an image.");
+                    return;
             }
 
             // Add the image to the PowerPoint
             string imageExtension = System.IO.Path.GetExtension(update.ImageFilePath).ToLower();
             ImagePartType imageType = ImagePartType.Jpeg;
+
             switch (System.IO.Path.GetExtension(update.ImageFilePath))
             {
                 case "bmp":
@@ -98,9 +96,20 @@ namespace BH.Adapter.PowerPoint
                     break;
             }
 
+            // Read the image file
+
             ImagePart imagePart = slidePart.AddImagePart(imageType);
-            imagePart.FeedData(stream);
-            stream.Close();
+
+            try
+            {
+                using (FileStream stream = File.OpenRead(update.ImageFilePath))
+                    imagePart.FeedData(stream);
+            }
+            catch (Exception ex)
+            {
+                BH.Engine.Base.Compute.RecordError(ex, "An error occurred while copying the image into the presentation.");
+                return;
+            }
 
             // Link the image element to the new image file
             Drawing.Blip blip = picture.BlipFill?.Blip;
@@ -134,11 +143,20 @@ namespace BH.Adapter.PowerPoint
                 return;
             }
 
-            Picture picture = matchingProperty.Parent?.Parent as Picture;
-            if (picture == null)
+            Picture picture;
+
+            switch (matchingProperty.Parent?.Parent)
             {
-                BH.Engine.Base.Compute.RecordError("The element with the name " + update.ElementName + " is not an image.");
-                return;
+                case Picture oldPicture:
+                    picture = oldPicture;
+                    break;
+                case Shape oldShape:
+                    picture = ConvertShapeToPicture(oldShape);
+                    slidePart.Slide.CommonSlideData.ShapeTree.ReplaceChild(picture, oldShape);
+                    break;
+                default:
+                    BH.Engine.Base.Compute.RecordError($"The element with name '{update.ElementName}' must be either a Shape or a Picture to be updated with an image.");
+                    return;
             }
 
             // Add the image to the PowerPoint
@@ -173,6 +191,30 @@ namespace BH.Adapter.PowerPoint
         }
 
         /***************************************************/
+
+        private Picture ConvertShapeToPicture(Shape oldShape)
+        {
+            ShapeProperties shapeProperties = (ShapeProperties)oldShape.Descendants<ShapeProperties>().Single().CloneNode(true);
+            NonVisualDrawingProperties drawingProperties = (NonVisualDrawingProperties)oldShape.Descendants<NonVisualDrawingProperties>().Single().CloneNode(true);
+
+            Picture picture = new Picture
+            (
+                new NonVisualPictureProperties
+                (
+                    drawingProperties,
+                    new NonVisualPictureDrawingProperties(),
+                    new ApplicationNonVisualDrawingProperties()
+                ),
+                new BlipFill
+                (
+                    new Drawing.Blip(),
+                    new Drawing.Stretch()
+                ),
+                shapeProperties
+            );
+
+            return picture;
+        }
 
     }
 }
