@@ -18,11 +18,16 @@ namespace BH.Adapter.PowerPoint
 
         private void CreateSlide(PresentationPart presentationPart, SlideCreate create)
         {
-            SlideMasterPart slideMasterPart = presentationPart.SlideMasterParts.FirstOrDefault();
+            SlideMasterPart slideMasterPart;
+
+            if (create.SlideMasterName.IsNullOrEmpty())
+                slideMasterPart = presentationPart.SlideMasterParts.FirstOrDefault();
+            else
+                slideMasterPart = presentationPart.SlideMasterParts.Single(sm => sm.ThemePart.Theme.Name.Value.Equals(create.SlideMasterName, StringComparison.OrdinalIgnoreCase));
 
             if (slideMasterPart == null)
             {
-                BH.Engine.Base.Compute.RecordError("There was no slide master in the presentation to get the layout from.");
+                BH.Engine.Base.Compute.RecordError($"There was no slide master with name '{create.SlideMasterName}'.");
                 return;
             }
 
