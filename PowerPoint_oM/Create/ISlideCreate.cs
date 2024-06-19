@@ -8,7 +8,5 @@ namespace BH.oM.PowerPoint
     public interface ISlideCreate : IBHoMObject
     {
         int SlideNumber { get; set; }
-
-        string LayoutName { get; set; }
     }
 }
