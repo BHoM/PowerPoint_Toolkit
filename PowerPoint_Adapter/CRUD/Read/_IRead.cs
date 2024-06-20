@@ -22,9 +22,13 @@
 
 using BH.oM.Adapter;
 using BH.oM.Base;
+using BH.oM.PowerPoint;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Presentation;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -37,26 +41,91 @@ namespace BH.Adapter.PowerPoint
         /**** Adapter overload method                   ****/
         /***************************************************/
 
-        // This method gets called when appropriate by the Pull method contained in the base Adapter class.
-        // It gets called once per each Type.
         protected override IEnumerable<IBHoMObject> IRead(Type type, IList ids, ActionConfig actionConfig = null)
         {
-            // Preferrably, different Create logic for different object types should go in separate methods.
-            // We achieve this by using the ICreate method to only dynamically dispatching to *type-specific Create implementations*
-            // In other words:
-            // if (type == typeof(SomeType1))
-            //     return ReadSomeType1(ids as dynamic);
-            // else if (type == typeof(SomeType2))
-            //     return ReadSomeType2(ids as dynamic);
-            // else if (type == typeof(SomeType3))
-            //     return ReadSomeType3(ids as dynamic);
+            if (type == typeof(SlideMasterInfo))
+                return ReadMasterTemplateInfo();
+            else if (type == typeof(SlideInfo))
+                return ReadSlideInfo();
+            else
+                BH.Engine.Base.Compute.RecordError($"The type {type.FullName} is not supported for pulling from presentations.");
 
             return new List<IBHoMObject>();
         }
 
         /***************************************************/
 
+        protected List<SlideInfo> ReadSlideInfo()
+        {
+            List<SlideInfo> objects = new List<SlideInfo>();
+
+            using (MemoryStream memoryStream = GetTemplateMemoryStream())
+            using (PresentationDocument presentationDoc = PresentationDocument.Open(memoryStream, true))
+            {
+                SlideIdList slideIdList = presentationDoc.PresentationPart?.Presentation.SlideIdList ?? new SlideIdList();
+                int slideNumber = 1;
+
+                foreach (SlideId slideId in slideIdList)
+                {
+                    SlideInfo info = new SlideInfo() { SlideNumber = slideNumber };
+                    SlidePart slidePart = (SlidePart)presentationDoc.PresentationPart.GetPartById(slideId.RelationshipId);
+                    
+                    if (slidePart == null)
+                    {
+                        slideNumber++;
+                        continue;
+                    }
+
+                    info.ElementNames = slidePart.Slide.CommonSlideData?.ShapeTree?.Elements<Shape>().Select(shape => shape.NonVisualShapeProperties?.NonVisualDrawingProperties?.Name.Value).ToList() ?? new List<string>();
+                    info.ElementNames.RemoveAll(x => x == null);
+
+                    objects.Add(info);
+                    slideNumber++;
+                }
+            }
+
+            return objects;
+        }
+
+        /***************************************************/
+
+        protected List<SlideMasterInfo> ReadMasterTemplateInfo()
+        {
+            List<SlideMasterInfo> objects = new List<SlideMasterInfo>();
+
+            using (MemoryStream memoryStream = GetTemplateMemoryStream())
+            using (PresentationDocument presentationDoc = PresentationDocument.Open(memoryStream, true))
+            {
+                IEnumerable<SlideMasterPart> slideMasterParts = presentationDoc.PresentationPart?.SlideMasterParts ?? new List<SlideMasterPart>();
+
+                foreach (SlideMasterPart slideMasterPart in slideMasterParts)
+                {
+                    SlideMasterInfo info = new SlideMasterInfo();
+                    info.Name = slideMasterPart.ThemePart.Theme.Name;
+
+                    IEnumerable<SlideLayoutPart> slideLayoutParts = slideMasterPart.SlideLayoutParts;
+
+                    foreach (SlideLayoutPart slideLayoutPart in slideLayoutParts)
+                    {
+                        SlideLayoutInfo templateInfo = new SlideLayoutInfo();
+                        templateInfo.Name = slideLayoutPart.SlideLayout.CommonSlideData.Name;
+
+                        // Get all the shape names from the layout, if at any point the properties are null, return a new List<string>();
+                        templateInfo.ElementNames = slideLayoutPart.SlideLayout.CommonSlideData.ShapeTree?.Elements<Shape>().Select(shape => shape.NonVisualShapeProperties?.NonVisualDrawingProperties?.Name?.Value).ToList() ?? new List<string>();
+
+                        // Remove any elements that have no name (if that is possible, but better to make sure)
+                        templateInfo.ElementNames.RemoveAll(x => x == null);
+
+                        info.Templates.Add(templateInfo);
+                    }
+
+                    objects.Add(info);
+                }
+            }
+
+            return objects;
+        }
+
+        /***************************************************/
     }
 }
-
-

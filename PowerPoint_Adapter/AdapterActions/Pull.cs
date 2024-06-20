@@ -25,6 +25,9 @@ using BH.Engine.Adapter;
 using BH.oM.Adapter;
 using BH.oM.Base;
 using BH.oM.Data.Requests;
+using BH.oM.PowerPoint;
+using DocumentFormat.OpenXml.Packaging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -38,14 +41,22 @@ namespace BH.Adapter.PowerPoint
 
         public override IEnumerable<object> Pull(IRequest request = null, PullType pullOption = PullType.AdapterDefault, ActionConfig actionConfig = null)
         {
-            return new List<object>();
+            if (request == null)
+            {
+                BH.Engine.Base.Compute.RecordError("Please provide a valid request to pull data from the template powerpoint.");
+                return new List<object>();
+            }
+
+            switch (request)
+            {
+                case FilterRequest filterRequest:
+                    return IRead(filterRequest.Type, null);
+                default:
+                    BH.Engine.Base.Compute.RecordError($"Requests of type {request.GetType().FullName} are not supported.");
+                    return new List<object>();
+            }
         }
 
         /***************************************************/
     }
 }
-
-
-
-
-
