@@ -164,7 +164,7 @@ namespace BH.Adapter.PowerPoint
 
         private Shape GenerateNewShape(Shape baseShape, IEnumerable<Polyline> paths, string fillColour, double fillOpacity, double edgeThickness, string edgeColour, bool isDashed, double scaleX, double scaleY, long offsetX, long offsetY, long height, long width)
         {
-            Shape newShape = baseShape.DeepClone();
+            Shape newShape = (Shape)baseShape.CloneNode(true);
             Drawing.PathList pathList = newShape.ShapeProperties.Descendants<Drawing.CustomGeometry>().First().PathList;
             var currentPaths = pathList.ChildElements.ToList();
 
@@ -180,49 +180,31 @@ namespace BH.Adapter.PowerPoint
                     path.Append(new Drawing.LineTo(ShapePoint(polyline.ControlPoints[j], scaleX, scaleY, offsetX, offsetY)));
                 }
 
-                pathList.Append(path);
+                pathList.AppendChild(path);
             }
 
             if (!string.IsNullOrEmpty(fillColour))
-            {
                 SetFillColour(newShape.ShapeProperties, fillColour, fillOpacity);
-            }
 
-            var outline = newShape.ShapeProperties.GetFirstChild<Drawing.Outline>();
+            Drawing.Outline outline = newShape.ShapeProperties.GetFirstChild<Drawing.Outline>();
             if (outline == null)
             {
                 outline = new Drawing.Outline();
-                newShape.ShapeProperties.AddChild(outline);
-            }
-            else
-            {
-                outline.Remove();
-                outline = outline.DeepClone();
                 newShape.ShapeProperties.AddChild(outline);
             }
 
             outline.Width = (int)Math.Round(edgeThickness * 12700);
 
             if (!string.IsNullOrEmpty(edgeColour))
-            {
                 SetFillColour(outline, edgeColour);
-            }
 
             if (isDashed)
             {
-                var dashed = outline.GetFirstChild<Drawing.PresetDash>();
-                if (dashed == null)
-                {
-                    dashed = new Drawing.PresetDash();
-                    outline.AddChild(dashed);
-                }
-
+                Drawing.PresetDash dashed = outline.GetFirstChild<Drawing.PresetDash>()?? outline.AppendChild(new Drawing.PresetDash());
                 dashed.Val = Drawing.PresetLineDashValues.Dash;
-
             }
 
             return newShape;
-
         }
 
         /***************************************************/
@@ -233,9 +215,5 @@ namespace BH.Adapter.PowerPoint
         }
 
         /***************************************************/
-
-
     }
 }
-
-
