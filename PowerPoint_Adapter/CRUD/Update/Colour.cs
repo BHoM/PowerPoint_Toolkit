@@ -75,9 +75,7 @@ namespace BH.Adapter.PowerPoint
                 SetFillColour(outline, update.EdgeColour);
             }
             if (!string.IsNullOrEmpty(update.FillColour))
-            {
                 SetFillColour(shape.ShapeProperties, update.FillColour);
-            }
         }
 
         /***************************************************/
@@ -87,35 +85,16 @@ namespace BH.Adapter.PowerPoint
         private void SetFillColour(OpenXmlElement element, string hexColour, double opacity = -1)
         {
             //Remove all instances of NoFill
-            foreach (var noFill in element.Elements<Drawing.NoFill>())
-            {
-                noFill.Remove();
-            }
+            element.RemoveAllChildren<Drawing.NoFill>();
 
             //Try get an existing SolidFill element out
-            Drawing.SolidFill fill = element.GetFirstChild<Drawing.SolidFill>();
-            if (fill == null)
-            {
-                //If not present, create and add to the element
-                fill = new Drawing.SolidFill();
-                element.AppendChild(fill);
-            }
-            else
-            {
-                //If existing, make sure any SchemeColor is removed - to be replaced by explicit RGB color
-                if (fill.SchemeColor != null)
-                    fill.SchemeColor.Remove();
-            }
+            Drawing.SolidFill fill = element.GetFirstChild<Drawing.SolidFill>()?? element.AppendChild(new Drawing.SolidFill());
 
-            Drawing.RgbColorModelHex rgb = fill.GetFirstChild<Drawing.RgbColorModelHex>();
-            if (rgb == null)
-            {
-                //Create the RGB color
-                rgb = new Drawing.RgbColorModelHex() { Val = hexColour.TrimStart('#') };
-                fill.Append(rgb);
-            }
-            else
-                rgb.Val = hexColour.TrimStart('#');
+            //If existing, make sure any SchemeColor is removed - to be replaced by explicit RGB color
+            fill.SchemeColor?.Remove();
+
+            Drawing.RgbColorModelHex rgb = fill.GetFirstChild<Drawing.RgbColorModelHex>()?? fill.AppendChild(new Drawing.RgbColorModelHex());
+            rgb.Val = hexColour.TrimStart('#');
 
             //Check if opacity value is to be assigned
             if (opacity >= 0)
@@ -125,17 +104,10 @@ namespace BH.Adapter.PowerPoint
                     BH.Engine.Base.Compute.RecordWarning("Opacity value above 1 provided. Opacity of 1 means full opacity (no transparency). Value of full opacity assumed.");
                     opacity = 1;
                 }
-                Drawing.Alpha alpha = new Drawing.Alpha();
-                alpha.Val = (int)Math.Round(opacity * 100000);
-                rgb.Append(alpha);
+                rgb.Append(new Drawing.Alpha() { Val = (int)Math.Round(opacity * 100000) });
             }
-
-
         }
 
         /***************************************************/
-
     }
 }
-
-
