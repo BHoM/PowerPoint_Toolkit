@@ -36,6 +36,8 @@ using System.IO;
 using BH.Engine.Base;
 using BH.Engine.Geometry;
 using BH.oM.Geometry;
+using DocumentFormat.OpenXml.Drawing.Charts;
+using DocumentFormat.OpenXml.VariantTypes;
 
 namespace BH.Adapter.PowerPoint
 {
@@ -66,6 +68,15 @@ namespace BH.Adapter.PowerPoint
         /***************************************************/
         /**** Helper Methods                            ****/
         /***************************************************/
+
+        private OpenXmlElement GetElementByName(SlidePart slidePart, string name)
+        {
+            NonVisualDrawingProperties matchingProperty = slidePart.Slide.Descendants<NonVisualDrawingProperties>()
+                .Where(x => x.Name.Value == name)
+                .FirstOrDefault();
+
+            return matchingProperty?.Parent?.Parent;
+        }
 
         private void CopyStream(Stream input, Stream output)
         {

@@ -48,18 +48,16 @@ namespace BH.Adapter.PowerPoint
 
         private void UpdateSlide(SlidePart slidePart, SimpleTextUpdate update)
         {
-            // Get the shape element matching the name provided in update
-            NonVisualDrawingProperties matchingProperty = slidePart.Slide.Descendants<NonVisualDrawingProperties>()
-                .Where(x => x.Name.Value == update.ElementName)
-                .FirstOrDefault();
+            OpenXmlElement element = GetElementByName(slidePart, update.ElementName);
 
-            if (matchingProperty == null)
+            if (element == null)
             {
-                BH.Engine.Base.Compute.RecordError("Could not find the element with the name " + update.ElementName);
+                BH.Engine.Base.Compute.RecordError($"Could not find an element with the name {update.ElementName}");
                 return;
             }
-                
-            Shape shape = matchingProperty.Parent?.Parent as Shape;
+
+            Shape shape = element as Shape;
+
             if (shape == null)
             {
                 BH.Engine.Base.Compute.RecordError("The element with the name " + update.ElementName + " is not a shape.");
@@ -99,18 +97,16 @@ namespace BH.Adapter.PowerPoint
 
         private void UpdateSlide(SlidePart slidePart, MultiLineTextUpdate update)
         {
-            // Get the shape element matching the name provided in update
-            NonVisualDrawingProperties matchingProperty = slidePart.Slide.Descendants<NonVisualDrawingProperties>()
-                .Where(x => x.Name.Value == update.ElementName)
-                .FirstOrDefault();
+            OpenXmlElement element = GetElementByName(slidePart, update.ElementName);
 
-            if (matchingProperty == null)
+            if (element == null)
             {
-                BH.Engine.Base.Compute.RecordError("Could not find the element with the name " + update.ElementName);
+                BH.Engine.Base.Compute.RecordError($"Could not find an element with the name {update.ElementName}");
                 return;
             }
 
-            Shape shape = matchingProperty.Parent?.Parent as Shape;
+            Shape shape = element as Shape;
+
             if (shape == null)
             {
                 BH.Engine.Base.Compute.RecordError("The element with the name " + update.ElementName + " is not a shape.");
