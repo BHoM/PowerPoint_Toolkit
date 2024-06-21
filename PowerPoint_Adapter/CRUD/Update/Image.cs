@@ -50,19 +50,17 @@ namespace BH.Adapter.PowerPoint
         {
 
             // Get the image element matching the name provided in update
-            NonVisualDrawingProperties matchingProperty = slidePart.Slide.Descendants<NonVisualDrawingProperties>()
-                .Where(x => x.Name.Value == update.ElementName)
-                .FirstOrDefault();
+            OpenXmlElement element = GetElementByName(slidePart, update.ElementName);
 
-            if (matchingProperty == null)
+            if (element == null)
             {
-                BH.Engine.Base.Compute.RecordError("Could not find the element with the name " + update.ElementName);
+                BH.Engine.Base.Compute.RecordError($"Could not find an element with the name {update.ElementName}");
                 return;
             }
 
             Picture picture;
 
-            switch (matchingProperty.Parent?.Parent)
+            switch (element)
             {
                 case Picture oldPicture:
                     picture = oldPicture;
@@ -125,27 +123,23 @@ namespace BH.Adapter.PowerPoint
 
         private void UpdateSlide(SlidePart slidePart, ImageUpdateStream update)
         {
-
             if (update.ImageStream == null)
             {
                 BH.Engine.Base.Compute.RecordError("Null stream provided. Unable to update image.");
                 return;
             }
 
-            // Get the image element matching the name provided in update
-            NonVisualDrawingProperties matchingProperty = slidePart.Slide.Descendants<NonVisualDrawingProperties>()
-                .Where(x => x.Name.Value == update.ElementName)
-                .FirstOrDefault();
+            OpenXmlElement element = GetElementByName(slidePart, update.ElementName);
 
-            if (matchingProperty == null)
+            if (element == null)
             {
-                BH.Engine.Base.Compute.RecordError("Could not find the element with the name " + update.ElementName);
+                BH.Engine.Base.Compute.RecordError($"Could not find an element with the name {update.ElementName}");
                 return;
             }
 
             Picture picture;
 
-            switch (matchingProperty.Parent?.Parent)
+            switch (element)
             {
                 case Picture oldPicture:
                     picture = oldPicture;

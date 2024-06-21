@@ -36,6 +36,9 @@ using System.IO;
 using BH.Engine.Base;
 using BH.Engine.Geometry;
 using BH.oM.Geometry;
+using DocumentFormat.OpenXml.Wordprocessing;
+using DocumentFormat.OpenXml.InkML;
+using System.Xml.Linq;
 
 namespace BH.Adapter.PowerPoint
 {
@@ -48,25 +51,22 @@ namespace BH.Adapter.PowerPoint
 
         private void UpdateSlide(SlidePart slidePart, ChartUpdate update)
         {
-            // Get the chart element matching the name provided in update
-            NonVisualDrawingProperties matchingProperty = slidePart.Slide.Descendants<NonVisualDrawingProperties>()
-                .Where(x => x.Name.Value == update.ElementName)
-                .FirstOrDefault();
-
-            if (matchingProperty == null)
+            OpenXmlElement element = GetElementByName(slidePart, update.ElementName);
+            if (element == null)
             {
-                BH.Engine.Base.Compute.RecordError("Could not find the element with the name " + update.ElementName);
+                BH.Engine.Base.Compute.RecordError($"Could not find the element with the name {update.ElementName}");
                 return;
             }
 
-            GraphicFrame frame = matchingProperty.Parent?.Parent as GraphicFrame;
+            GraphicFrame frame = element as GraphicFrame;
+
             if (frame == null)
             {
                 BH.Engine.Base.Compute.RecordError("The element with the name " + update.ElementName + " is not a chart.");
                 return;
             }
-            Drawing.Charts.ChartReference reference = frame.Descendants<Drawing.Charts.ChartReference>().FirstOrDefault();
 
+            Drawing.Charts.ChartReference reference = frame.Descendants<Drawing.Charts.ChartReference>().FirstOrDefault();
             ChartPart chartPart;
 
             try
