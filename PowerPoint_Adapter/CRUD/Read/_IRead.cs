@@ -43,7 +43,7 @@ namespace BH.Adapter.PowerPoint
 
         protected override IEnumerable<IBHoMObject> IRead(Type type, IList ids, ActionConfig actionConfig = null)
         {
-            if (type == typeof(SlideMasterInfo))
+            if (type == typeof(SlideMasterInfo) || type == typeof(SlideLayoutInfo))
                 return ReadMasterTemplateInfo();
             else if (type == typeof(SlideInfo))
                 return ReadSlideInfo();
