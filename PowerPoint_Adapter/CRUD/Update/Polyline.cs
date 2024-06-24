@@ -67,10 +67,23 @@ namespace BH.Adapter.PowerPoint
                 BH.Engine.Base.Compute.RecordError("The element with the name " + update.ElementName + " is not a shape.");
                 return;
             }
-            long left = shape.ShapeProperties.Transform2D.Offset.X;
-            long top = shape.ShapeProperties.Transform2D.Offset.Y;
-            long width = shape.ShapeProperties.Transform2D.Extents.Cx;
-            long height = shape.ShapeProperties.Transform2D.Extents.Cy;
+
+
+            Drawing.Path initialPath = shape.ShapeProperties.Descendants<Drawing.CustomGeometry>().FirstOrDefault().PathList.FirstOrDefault() as Drawing.Path;  //Gets out the first path
+            long width, height;
+
+            //Try to grab boundaries from initial path
+            if (initialPath != null)
+            {
+                width = initialPath.Width;
+                height = initialPath.Height;
+            }
+            else
+            {
+                //If not possible, grab from general extents
+                width = shape.ShapeProperties.Transform2D.Extents.Cx;
+                height = shape.ShapeProperties.Transform2D.Extents.Cy;
+            }
 
             update = update.ShallowClone();
             //Mirrors the shape around the XZ plane.
@@ -91,6 +104,11 @@ namespace BH.Adapter.PowerPoint
 
             if (update.KeepShapeAspectRatio)
             {
+                //Set the bounds to be square to ensure no change in aspect ratio is happening through varies scaling in the two directions
+                long maxDim = Math.Max(width, height);
+                width = maxDim;
+                height = maxDim;
+
                 double scale = Math.Min(width / bhWidth, height / bhHeight);
                 scaleX = scale;
                 scaleY = scale;
@@ -101,20 +119,26 @@ namespace BH.Adapter.PowerPoint
                 scaleY = height / bhHeight;
             }
 
+            //Scale with provided factor
             scaleX = scaleX * update.Scale;
             scaleY = scaleY * update.Scale;
 
+            //Offsets to ensure figures that are not in first quadrant, starting at the orgin, are moved to fit the figure
             long offsetX = (long)Math.Round(-totalBox.Min.X * scaleX);
             long offsetY = (long)Math.Round(-totalBox.Min.Y * scaleY);
 
             if (update.CentreShapes)
             {
+                //Ensure the figure is centred by applying additional offset
                 offsetX += (width - (long)Math.Round(bhWidth * scaleX)) / 2;
                 offsetY += (height - (long)Math.Round(bhHeight * scaleY)) / 2;
             }
 
+            //Gets the owner of the shape to add the new shapes to
             var shapeOwner = shape.Parent;
+            //Remove shape to be replaced
             shape.Remove();
+            //Remove outline proeprties as is not be replaced by new
             var initialOutline = shape.ShapeProperties.GetFirstChild<Drawing.Outline>();
             if (initialOutline != null)
                 initialOutline.Remove();
@@ -123,14 +147,14 @@ namespace BH.Adapter.PowerPoint
             {
                 foreach (var pathGroup in update.Shapes.GroupBy(x => new { x.EdgeColour, x.FillColour, x.Thickness, x.FillOpacity, x.IsDashed }))
                 {
-                    shapeOwner.Append(GenerateNewShape(shape, pathGroup.Select(x => x.Path), pathGroup.Key.FillColour, pathGroup.Key.FillOpacity, pathGroup.Key.Thickness, pathGroup.Key.EdgeColour, pathGroup.Key.IsDashed, scaleX, scaleY, offsetX, offsetY));
+                    shapeOwner.Append(GenerateNewShape(shape, pathGroup.Select(x => x.Path), pathGroup.Key.FillColour, pathGroup.Key.FillOpacity, pathGroup.Key.Thickness, pathGroup.Key.EdgeColour, pathGroup.Key.IsDashed, scaleX, scaleY, offsetX, offsetY, height, width));
                 }
             }
             else
             {
                 foreach (PolylineData polylineData in update.Shapes)
                 {
-                    shapeOwner.Append(GenerateNewShape(shape, new List<Polyline> { polylineData.Path }, polylineData.FillColour, polylineData.FillOpacity, polylineData.Thickness, polylineData.EdgeColour, polylineData.IsDashed, scaleX, scaleY, offsetX, offsetY));
+                    shapeOwner.Append(GenerateNewShape(shape, new List<Polyline> { polylineData.Path }, polylineData.FillColour, polylineData.FillOpacity, polylineData.Thickness, polylineData.EdgeColour, polylineData.IsDashed, scaleX, scaleY, offsetX, offsetY, height, width));
                 }
             }
 
@@ -138,16 +162,18 @@ namespace BH.Adapter.PowerPoint
 
         /***************************************************/
 
-        private Shape GenerateNewShape(Shape baseShape, IEnumerable<Polyline> paths, string fillColour, double fillOpacity, double edgeThickness, string edgeColour, bool isDashed, double scaleX, double scaleY, long offsetX, long offsetY)
+        private Shape GenerateNewShape(Shape baseShape, IEnumerable<Polyline> paths, string fillColour, double fillOpacity, double edgeThickness, string edgeColour, bool isDashed, double scaleX, double scaleY, long offsetX, long offsetY, long height, long width)
         {
             Shape newShape = baseShape.DeepClone();
             Drawing.PathList pathList = newShape.ShapeProperties.Descendants<Drawing.CustomGeometry>().First().PathList;
             var currentPaths = pathList.ChildElements.ToList();
+
             currentPaths.ForEach(x => x?.Remove());
 
             foreach (Polyline polyline in paths)
             {
-                Drawing.Path path = new Drawing.Path();
+                Drawing.Path path = new Drawing.Path() { Width = width, Height = height };
+
                 path.Append(new Drawing.MoveTo(ShapePoint(polyline.ControlPoints[0], scaleX, scaleY, offsetX, offsetY)));
                 for (int j = 1; j < polyline.ControlPoints.Count; j++)
                 {
