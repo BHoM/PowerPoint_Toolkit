@@ -11,12 +11,12 @@ namespace BH.Adapter.PowerPoint
 {
     public partial class PowerPointAdapter: BHoMAdapter
     {
-        public void ICreateSlide(PresentationPart presentationPart, ISlideCreate create)
+        public int ICreateSlide(PresentationPart presentationPart, ISlideCreate create)
         {
-            CreateSlide(presentationPart, create as dynamic);
+            return CreateSlide(presentationPart, create as dynamic);
         }
 
-        private void CreateSlide(PresentationPart presentationPart, SlideCreate create)
+        private int CreateSlide(PresentationPart presentationPart, SlideCreate create)
         {
             SlideMasterPart slideMasterPart;
 
@@ -29,7 +29,7 @@ namespace BH.Adapter.PowerPoint
             if (slideMasterPart == null)
             {
                 BH.Engine.Base.Compute.RecordError($"There was no slide master with name '{create.SlideMasterName}'.");
-                return;
+                return -1;
             }
 
             SlideLayoutPart slideLayoutPart = slideMasterPart.SlideLayoutParts.SingleOrDefault(sl => sl.SlideLayout.CommonSlideData.Name.Value.Equals(create.LayoutName, StringComparison.OrdinalIgnoreCase));
@@ -37,7 +37,7 @@ namespace BH.Adapter.PowerPoint
             if (slideLayoutPart == null)
             {
                 BH.Engine.Base.Compute.RecordError($"The slide layout ({create.LayoutName}) could not be found in the master.");
-                return;
+                return -1;
             }
 
             // Create a new slide and add to presentation.
@@ -54,12 +54,13 @@ namespace BH.Adapter.PowerPoint
                 slidePart.Slide.CommonSlideData.ShapeTree.RemoveChild(picture);
 
             // Insert the slide at the position given.
-            presentationPart.SetSlideID(slidePart, create.SlideNumber - 1);
+            return presentationPart.SetSlideID(slidePart, create.SlideNumber - 1);
         }
 
-        private void CreateSlide(PresentationPart presentationPart, ISlideCreate create)
+        private int CreateSlide(PresentationPart presentationPart, ISlideCreate create)
         {
             BH.Engine.Base.Compute.RecordError($"Objects of type {create.GetType().FullName} are not currently supported for use in the PowerPointAdapter.");
+            return -1;
         }
     }
 }

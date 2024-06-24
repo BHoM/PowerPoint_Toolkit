@@ -191,6 +191,10 @@ namespace BH.Adapter.PowerPoint
             ShapeProperties shapeProperties = (ShapeProperties)oldShape.Descendants<ShapeProperties>().Single().CloneNode(true);
             NonVisualDrawingProperties drawingProperties = (NonVisualDrawingProperties)oldShape.Descendants<NonVisualDrawingProperties>().Single().CloneNode(true);
 
+            // If the shape doesn't have a custom or preset geometry (for some reason) it does not display the image, so create a rectangular presetgeometry if it doesn't exist already.
+            if (shapeProperties.Descendants<Drawing.CustomGeometry>().SingleOrDefault() == null)
+                _ = shapeProperties.Descendants<Drawing.PresetGeometry>().SingleOrDefault() ?? shapeProperties.AppendChild(new Drawing.PresetGeometry() { Preset=Drawing.ShapeTypeValues.Rectangle });
+
             Picture picture = new Picture
             (
                 new NonVisualPictureProperties

@@ -26,6 +26,7 @@ using BH.oM.Adapter;
 using BH.oM.Base;
 using BH.oM.Data.Collections;
 using BH.oM.PowerPoint;
+using BH.oM.PowerPoint.Layout;
 using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
@@ -82,6 +83,9 @@ namespace BH.Adapter.PowerPoint
                             break;
                         case ISlideCreate create:
                             ICreateSlide(presentationDoc.PresentationPart, create);
+                            break;
+                        case ISlideLayout layout:
+                            ICreateLayout(presentationDoc.PresentationPart, layout);
                             break;
                     }
                 }
