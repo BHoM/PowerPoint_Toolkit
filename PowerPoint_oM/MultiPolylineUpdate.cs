@@ -49,6 +49,9 @@ namespace BH.oM.PowerPoint
 
         [Description("If true, the provided shapes that share all properties in terms of colours will be added to the same shape object. If false, all PolylineData obejcts will be added to separate shape objects.")]
         public virtual bool GroupPolylinesWithSameProperties { get; set; } = false;
+
+        [Description("Scale factor to be applied to the figure.")]
+        public virtual double Scale { get; set; } = 1.0;
     }
 }
 

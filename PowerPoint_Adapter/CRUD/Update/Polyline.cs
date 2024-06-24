@@ -101,6 +101,9 @@ namespace BH.Adapter.PowerPoint
                 scaleY = height / bhHeight;
             }
 
+            scaleX = scaleX * update.Scale;
+            scaleY = scaleY * update.Scale;
+
             long offsetX = (long)Math.Round(-totalBox.Min.X * scaleX);
             long offsetY = (long)Math.Round(-totalBox.Min.Y * scaleY);
 
