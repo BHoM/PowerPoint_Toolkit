@@ -9,7 +9,7 @@ namespace BH.Adapter.PowerPoint
 {
     public static partial class Compute
     {
-        public static void SetSlideID(this PresentationPart presentationPart, SlidePart slidePart, int slideIndex)
+        public static int SetSlideID(this PresentationPart presentationPart, SlidePart slidePart, int slideIndex)
         {
             SlideIdList slideIDList = presentationPart.Presentation.SlideIdList;
 
@@ -27,12 +27,14 @@ namespace BH.Adapter.PowerPoint
                 BH.Engine.Base.Compute.RecordNote($"The slide number ({slideIndex + 1}) was outside the range of slides ({slideIDList.Count()}). Appending the slide to the end of the presentation.");
                 SlideId slideID = new SlideId() { Id = newID, RelationshipId = presentationPart.GetIdOfPart(slidePart) };
                 slideIDList.AppendChild(slideID);
+                return slideIDList.Count();
             }
             else
             {
                 SlideId nextSlideID = (SlideId)slideIDList.ChildElements[slideIndex];
                 SlideId slideID = new SlideId() { Id = newID, RelationshipId = presentationPart.GetIdOfPart(slidePart) };
                 slideIDList.InsertBefore(slideID, nextSlideID);
+                return slideIndex;
             }
         }
 
