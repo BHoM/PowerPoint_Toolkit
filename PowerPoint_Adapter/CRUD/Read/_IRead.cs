@@ -59,9 +59,11 @@ namespace BH.Adapter.PowerPoint
         {
             List<SlideInfo> objects = new List<SlideInfo>();
 
-            using (MemoryStream memoryStream = GetTemplateMemoryStream())
-            using (PresentationDocument presentationDoc = PresentationDocument.Open(memoryStream, true))
+            using (PresentationDocument presentationDoc = GetTemplateDocument())
             {
+                if (presentationDoc == null)
+                    return null;
+
                 SlideIdList slideIdList = presentationDoc.PresentationPart?.Presentation.SlideIdList ?? new SlideIdList();
                 int slideNumber = 1;
 
@@ -93,9 +95,11 @@ namespace BH.Adapter.PowerPoint
         {
             List<SlideMasterInfo> objects = new List<SlideMasterInfo>();
 
-            using (MemoryStream memoryStream = GetTemplateMemoryStream())
-            using (PresentationDocument presentationDoc = PresentationDocument.Open(memoryStream, true))
+            using (PresentationDocument presentationDoc = GetTemplateDocument())
             {
+                if (presentationDoc == null)
+                    return null;
+
                 IEnumerable<SlideMasterPart> slideMasterParts = presentationDoc.PresentationPart?.SlideMasterParts ?? new List<SlideMasterPart>();
 
                 foreach (SlideMasterPart slideMasterPart in slideMasterParts)
