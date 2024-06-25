@@ -68,9 +68,11 @@ namespace BH.Adapter.PowerPoint
             }
 
             // PresentationDocument.Open throws an ArgumentNullException if the input stream is null, which is possible as GetTemplateMemoryStream can return null. If this is found to be bad UX, we could combine these two using blocks into one, where the exception is caught and discarded instead, leaving the BHoM error from GetTemplateMemoryStream as the only error.
-            using (MemoryStream memoryStream = GetTemplateMemoryStream())
-            using (PresentationDocument presentationDoc = PresentationDocument.Open(memoryStream, true))
+            using (PresentationDocument presentationDoc = GetTemplateDocument())
             {
+                if (presentationDoc == null)
+                    return null;
+
                 // Update/create slides based upon given actions.
                 foreach (object action in objects)
                 {
@@ -122,31 +124,33 @@ namespace BH.Adapter.PowerPoint
         /**** Private Methods                           ****/
         /***************************************************/
 
-        private MemoryStream GetTemplateMemoryStream()
+        private PresentationDocument GetTemplateDocument()
         {
+            MemoryStream stream = new MemoryStream();
             if (m_TemplateFileSettings != null)
-                return OpenTemplateFile(m_TemplateFileSettings.GetFullFileName());
+                stream = OpenTemplateFile(m_TemplateFileSettings.GetFullFileName());
             else if (m_TemplateStream != null)
-            {
-                MemoryStream memoryStream = new MemoryStream();
-                m_TemplateStream.CopyTo(memoryStream);
-                return memoryStream;
-            }
+                m_TemplateStream.CopyTo(stream);
             else
             {
                 BH.Engine.Base.Compute.RecordError("Neither a template file settings or template stream could be found.");
                 return null;
             }
+
+            if (stream == null)
+                return null;
+
+            return PresentationDocument.Open(stream, true);
         }
 
         private MemoryStream OpenTemplateFile(string filePath)
         {
             // Make sure the file exists
-            if (!File.Exists(filePath))
-            {
-                BH.Engine.Base.Compute.RecordError($"There is no presentation with the file path {filePath}");
-                return null;
-            }
+            //if (!File.Exists(filePath))
+            //{
+            //    BH.Engine.Base.Compute.RecordError($"There is no presentation with the file path {filePath}");
+            //    return null;
+            //}
 
             // Copy the template file to the memory stream
             MemoryStream memoryStream = new MemoryStream();
