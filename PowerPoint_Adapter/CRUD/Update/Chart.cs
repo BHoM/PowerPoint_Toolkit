@@ -268,7 +268,7 @@ namespace BH.Adapter.PowerPoint
                 }
 
                 // Saving the spreadsheet
-                spreadsheetDoc.Close();
+                spreadsheetDoc.Dispose();
                 stream.Close();
             }
             catch (Exception e)

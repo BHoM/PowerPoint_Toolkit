@@ -104,7 +104,7 @@ namespace BH.Adapter.PowerPoint
             try
             {
                 if (m_OutputFileSettings != null)
-                    presentationDoc.SaveAs(m_OutputFileSettings.GetFullFileName());
+                    presentationDoc.Clone(m_OutputFileSettings.GetFullFileName());
                 else if (m_OutputStream != null)
                 {
                     presentationDoc.Clone(m_OutputStream);
@@ -123,7 +123,7 @@ namespace BH.Adapter.PowerPoint
                 // Release all content from memory
                 if (presentationDoc != null)
                 {
-                    presentationDoc.Close();
+                    presentationDoc.Dispose();
                 }
                 if (memoryStream != null)
                 {
