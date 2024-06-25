@@ -56,6 +56,7 @@ namespace BH.Adapter.PowerPoint
             objects = objects.Where(x => x != null);
 
             // Filter out objects based on the push type given
+            //TODO - need to handle DeleteThenCreate, as deletion currently happens after creating/updating slides
             switch (pushType)
             {
                 case PushType.UpdateOnly:
@@ -64,6 +65,12 @@ namespace BH.Adapter.PowerPoint
                 case PushType.CreateNonExisting:
                 case PushType.CreateOnly:
                     objects = objects.Where(x => typeof(ISlideCreate).IsAssignableFrom(x.GetType()));
+                    break;
+                case PushType.DeleteThenCreate:
+                    BH.Engine.Base.Compute.RecordError($"Adapter push type {PushType.DeleteThenCreate} is not supported for the PowerPoint_Toolkit, as slides are deleted after updates are made.");
+                    return new List<object>();
+                case PushType.UpdateOrCreateOnly:
+                    objects = objects.Where(x => (typeof(ISlideCreate).IsAssignableFrom(x.GetType())) || (typeof(ISlideUpdate).IsAssignableFrom(x.GetType())));
                     break;
             }
 
@@ -100,9 +107,6 @@ namespace BH.Adapter.PowerPoint
                     return new List<object>();
                 }
 
-                // Update the slides
-                PresentationPart presentationPart = presentationDoc.PresentationPart;
-                Presentation presentation = presentationPart.Presentation;
                 // Update/create slides based upon given actions.
                 foreach (object action in objects)
                 {
@@ -134,7 +138,7 @@ namespace BH.Adapter.PowerPoint
                     }
                     else
                         deleteSlide = slideDeletes[0];
-                    DeleteSlides(presentationPart, deleteSlide);
+                    DeleteSlides(presentationDoc.PresentationPart, deleteSlide);
                 }
 
                 // Check validation of document, and throw warning if there are any errors, as they may still be recovered in powerpoint.
