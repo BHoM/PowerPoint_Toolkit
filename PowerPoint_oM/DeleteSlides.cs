@@ -28,13 +28,12 @@ using System.Text;
 
 namespace BH.oM.PowerPoint
 {
-    public interface ISlideUpdate : IBHoMObject, IExcelModification
+    [Description("Allows for deletion of a specific slide.")]
+    public class DeleteSlides : BHoMObject, IExcelModification
     {
-        [Description("Number of the slide where the update needs to happen.")]
-        int SlideNumber { get; set; }
+        [Description("Number of the slides that is to be deleted.")]
+        public virtual List<int> SlideNumbers { get; set; } = new List<int>();
 
-        [Description("Name of the element that needs to be updated.")]
-        string ElementName { get; set; }
     }
 }
 
