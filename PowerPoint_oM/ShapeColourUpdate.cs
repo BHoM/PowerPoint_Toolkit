@@ -35,7 +35,7 @@ namespace BH.oM.PowerPoint
         [Description("Number of the slide where the update needs to happen.")]
         public virtual int SlideNumber { get; set; } = 0;
 
-        [Description("Name of the text element that needs to be updated.")]
+        [Description("Name of the shape element that needs to be updated.")]
         public virtual string ElementName { get; set; } = "";
 
         [Description("New edge hex colour represenation of the element.")]

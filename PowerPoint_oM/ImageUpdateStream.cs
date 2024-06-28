@@ -38,7 +38,7 @@ namespace BH.oM.PowerPoint
         [Description("Name of the image element that needs to be updated.")]
         public virtual string ElementName { get; set; } = "";
 
-        [Description("File path of the new image.")]
+        [Description("Stream containing the new image.")]
         public virtual Stream ImageStream { get; set; } = null;
 
         [Description("Image type format for the image in the stream, eg, bmb/gif/png/svg.")]

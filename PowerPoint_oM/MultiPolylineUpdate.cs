@@ -29,13 +29,13 @@ using System.Text;
 
 namespace BH.oM.PowerPoint
 {
-    [Description("Allows to replace the image content of an image element.")]
+    [Description("Allows to change the geometry of a shape element.")]
     public class MultiPolylineUpdate : BHoMObject, ISlideUpdate
     {
         [Description("Number of the slide where the update needs to happen.")]
         public virtual int SlideNumber { get; set; } = 0;
 
-        [Description("Name of the image element that needs to be updated.")]
+        [Description("Name of the shape element that needs to be updated.")]
         public virtual string ElementName { get; set; } = "";
 
         [Description("Shape to be updated.")]
