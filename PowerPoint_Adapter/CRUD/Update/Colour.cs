@@ -70,7 +70,9 @@ namespace BH.Adapter.PowerPoint
             // Replace the colours
             if (!string.IsNullOrEmpty(update.EdgeColour))
             {
-                //TODO
+                Drawing.Outline outline = shape.ShapeProperties?.GetFirstChild<Drawing.Outline>() ?? shape.ShapeProperties.AppendChild(new Drawing.Outline());
+            
+                SetFillColour(outline, update.EdgeColour)
             }
             if (!string.IsNullOrEmpty(update.FillColour))
             {
