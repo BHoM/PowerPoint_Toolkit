@@ -71,8 +71,8 @@ namespace BH.Adapter.PowerPoint
             if (!string.IsNullOrEmpty(update.EdgeColour))
             {
                 Drawing.Outline outline = shape.ShapeProperties?.GetFirstChild<Drawing.Outline>() ?? shape.ShapeProperties.AppendChild(new Drawing.Outline());
-            
-                SetFillColour(outline, update.EdgeColour)
+
+                SetFillColour(outline, update.EdgeColour);
             }
             if (!string.IsNullOrEmpty(update.FillColour))
             {
