@@ -25,6 +25,7 @@ using BH.oM.Adapter;
 using BH.oM.Base;
 using BH.oM.Data.Collections;
 using BH.oM.PowerPoint;
+using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
 using System;
@@ -54,66 +55,98 @@ namespace BH.Adapter.PowerPoint
             if (pushType == PushType.AdapterDefault)
                 pushType = PushType.UpdateOnly;
 
-            // Copy the content of the template into a MemoryStream
+
             MemoryStream memoryStream = null;
-            if (m_TemplateFileSettings != null)
-                memoryStream = OpenTemplateFile(m_TemplateFileSettings.GetFullFileName());
-            else if (m_TemplateStream != null)
-            {
-                memoryStream = new MemoryStream();
-                m_TemplateStream.CopyTo(memoryStream);
-            }
-
-            if (memoryStream == null)
-            {
-                BH.Engine.Base.Compute.RecordError("The content of the template was not extracted successfully.");
-                return new List<object>();
-            }
-
-            // Open the presentation
             PresentationDocument presentationDoc = null;
             try
             {
-                presentationDoc = PresentationDocument.Open(memoryStream, true);
-            }
-            catch (Exception e)
-            {
-                memoryStream.Close();
-                BH.Engine.Base.Compute.RecordError("Could not open the file: " + e.Message);
-                return new List<object>();
-            }
-            
-            // Update the slides
-            PresentationPart presentationPart = presentationDoc.PresentationPart;
-            Presentation presentation = presentationPart.Presentation;
-            foreach (ISlideUpdate update in objects.OfType<ISlideUpdate>())
-            {
-                SlidePart slidePart = GetSlide(presentationPart, update.SlideNumber - 1);
-                if (slidePart != null)
-                    IUpdateSlide(slidePart, update);
-            }
 
-            // Save the output 
-            try
-            {
-                if (m_OutputFileSettings != null)
-                    presentationDoc.SaveAs(m_OutputFileSettings.GetFullFileName());
-                else if (m_OutputStream != null)
+                // Copy the content of the template into a MemoryStream
+
+                if (m_TemplateFileSettings != null)
+                    memoryStream = OpenTemplateFile(m_TemplateFileSettings.GetFullFileName());
+                else if (m_TemplateStream != null)
                 {
-                    presentationDoc.Clone(m_OutputStream);
-                    m_OutputStream.Position = 0;
+                    memoryStream = new MemoryStream();
+                    m_TemplateStream.CopyTo(memoryStream);
                 }
-                    
+
+                if (memoryStream == null)
+                {
+                    BH.Engine.Base.Compute.RecordError("The content of the template was not extracted successfully.");
+                    return new List<object>();
+                }
+
+                // Open the presentation
+
+                try
+                {
+                    presentationDoc = PresentationDocument.Open(memoryStream, true);
+                }
+                catch (Exception e)
+                {
+                    memoryStream.Close();
+                    BH.Engine.Base.Compute.RecordError("Could not open the file: " + e.Message);
+                    return new List<object>();
+                }
+
+                // Update the slides
+                PresentationPart presentationPart = presentationDoc.PresentationPart;
+                Presentation presentation = presentationPart.Presentation;
+                foreach (ISlideUpdate update in objects.OfType<ISlideUpdate>())
+                {
+                    SlidePart slidePart = GetSlide(presentationPart, update.SlideNumber - 1);
+                    if (slidePart != null)
+                        IUpdateSlide(slidePart, update);
+                }
+
+                //Handle slide deletion
+                var slideDeletes = objects.OfType<DeleteSlides>().ToList();
+                if (slideDeletes.Any())
+                {
+                    DeleteSlides deleteSlide;
+                    if (slideDeletes.Count > 1)
+                    {
+                        //Combine all DeleteSlides into a single one. Done to ensure slidenumbers are not mixed up as they are deleted (i.e. slide 4 delted before slide 10, with 10 now meaning something else)
+                        deleteSlide = new DeleteSlides { SlideNumbers = slideDeletes.SelectMany(x => x.SlideNumbers).Distinct().ToList() };
+                    }
+                    else
+                        deleteSlide = slideDeletes[0];
+                    DeleteSlides(presentationPart, deleteSlide);
+                }
+
+                // Save the output 
+                try
+                {
+                    if (m_OutputFileSettings != null)
+                        presentationDoc.Clone(m_OutputFileSettings.GetFullFileName());
+                    else if (m_OutputStream != null)
+                    {
+                        presentationDoc.Clone(m_OutputStream);
+                        m_OutputStream.Position = 0;
+                    }
+
+                }
+                catch (Exception e)
+                {
+                    BH.Engine.Base.Compute.RecordError("Could not save the changes: " + e.Message);
+                }
+
             }
-            catch (Exception e)
+            finally
             {
-                BH.Engine.Base.Compute.RecordError("Could not save the changes: " + e.Message);
+                // Release all content from memory
+                if (presentationDoc != null)
+                {
+                    presentationDoc.Dispose();
+                }
+                if (memoryStream != null)
+                {
+                    memoryStream.Close();
+                }
             }
 
-            // Release all content from memory
-            presentationDoc.Close();
-            memoryStream.Close();
-            
+
             return objects.ToList();
         }
 

@@ -34,140 +34,16 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using BH.Engine.Base;
+using BH.Engine.Geometry;
+using BH.oM.Geometry;
 
 namespace BH.Adapter.PowerPoint
 {
     public partial class PowerPointAdapter : BHoMAdapter
     {
-        /***************************************************/
-        /**** Interface Methods                         ****/
-        /***************************************************/
-
-        protected void IUpdateSlide(SlidePart slidePart, ISlideUpdate update)
-        {
-            if (update == null)
-                BH.Engine.Base.Compute.RecordError("No action was found for an update of type " + update.GetType().Name);
-            else
-                UpdateSlide(slidePart, update as dynamic);
-        }
-
-
+       
         /***************************************************/
         /**** Private Methods                           ****/
-        /***************************************************/
-
-        private void UpdateSlide(SlidePart slidePart, SimpleTextUpdate update)
-        {
-            // Get the shape element matching the name provided in update
-            NonVisualDrawingProperties matchingProperty = slidePart.Slide.Descendants<NonVisualDrawingProperties>()
-                .Where(x => x.Name.Value == update.ElementName)
-                .FirstOrDefault();
-
-            if (matchingProperty == null)
-            {
-                BH.Engine.Base.Compute.RecordError("Could not find the element with the name " + update.ElementName);
-                return;
-            }
-                
-            Shape shape = matchingProperty.Parent?.Parent as Shape;
-            if (shape == null)
-            {
-                BH.Engine.Base.Compute.RecordError("The element with the name " + update.ElementName + " is not a shape.");
-                return;
-            }
-
-            // Replace the text
-            var paragraph = shape.Descendants<Drawing.Paragraph>().FirstOrDefault();
-            var runs = paragraph.Descendants<Drawing.Run>().ToList();
-
-            if (runs.Count == 0)
-            {
-                paragraph.AddChild(new Drawing.Run(new Drawing.Text(update.Text)));
-            }
-            else if (runs.Count == 1)
-            {
-                Drawing.Text text = runs.First().Text;
-                if (text != null)
-                    text.Text = update.Text;
-                else
-                    runs.First().Text = new Drawing.Text(update.Text);
-            }
-            else
-            { 
-                BH.Engine.Base.Compute.RecordError("The element contains more than one line of text. Please use MultiLineTextUpdate for this.");
-                return;
-            }
-           
-        }
-
-        /***************************************************/
-
-        private void UpdateSlide(SlidePart slidePart, ImageUpdate update)
-        {
-
-            // Get the image element matching the name provided in update
-            NonVisualDrawingProperties matchingProperty = slidePart.Slide.Descendants<NonVisualDrawingProperties>()
-                .Where(x => x.Name.Value == update.ElementName)
-                .FirstOrDefault();
-
-            if (matchingProperty == null)
-            {
-                BH.Engine.Base.Compute.RecordError("Could not find the element with the name " + update.ElementName);
-                return;
-            }
-
-            Picture picture = matchingProperty.Parent?.Parent as Picture;
-            if (picture == null)
-            {
-                BH.Engine.Base.Compute.RecordError("The element with the name " + update.ElementName + " is not an image.");
-                return;
-            }
-
-            // Read the image file
-            FileStream stream;
-            try
-            {
-                stream = File.OpenRead(update.ImageFilePath);
-            }
-            catch (Exception e)
-            {
-                BH.Engine.Base.Compute.RecordError("The image could not be opened: " + e.Message);
-                return;
-            }
-
-            // Add the image to the PowerPoint
-            string imageExtension = System.IO.Path.GetExtension(update.ImageFilePath).ToLower();
-            ImagePartType imageType = ImagePartType.Jpeg;
-            switch (System.IO.Path.GetExtension(update.ImageFilePath))
-            {
-                case "bmp":
-                    imageType = ImagePartType.Bmp;
-                    break;
-                case "png":
-                    imageType = ImagePartType.Png;
-                    break;
-                case "gif":
-                    imageType = ImagePartType.Gif;
-                    break;
-                case "svg":
-                    imageType = ImagePartType.Svg;
-                    break;
-            }
-
-            ImagePart imagePart = slidePart.AddImagePart(imageType);
-            imagePart.FeedData(stream);
-            stream.Close();
-
-            // Link the image element to the new image file
-            Drawing.Blip blip = picture.BlipFill?.Blip;
-            if (blip == null)
-            {
-                BH.Engine.Base.Compute.RecordError("Could not replace the image in element " + update.ElementName);
-                return;
-            }
-            blip.Embed = slidePart.GetIdOfPart(imagePart);
-        }
-
         /***************************************************/
 
         private void UpdateSlide(SlidePart slidePart, ChartUpdate update)
@@ -233,7 +109,7 @@ namespace BH.Adapter.PowerPoint
             var chartSeries = chart.Descendants<Drawing.Charts.SeriesText>().Select(x => x.Parent).ToList();
 
             var shapeProperties = chartSeries.Select(x => x.ChildElements.OfType<Drawing.Charts.ChartShapeProperties>().FirstOrDefault()).ToList();
-            shapeProperties.ForEach(x => x.Remove());
+            shapeProperties.ForEach(x => x?.Remove());
 
             var seriesParent = chartSeries.First().Parent;
             chartSeries.ForEach(x => x.Remove());
@@ -259,7 +135,7 @@ namespace BH.Adapter.PowerPoint
                 var serie = seriesTemplate.DeepClone();
 
                 serie.ReplaceChild(
-                    new Drawing.Charts.Index { Val = new UInt32Value((uint)i)},
+                    new Drawing.Charts.Index { Val = new UInt32Value((uint)i) },
                     serie.ChildElements.OfType<Drawing.Charts.Index>().First()
                 );
 
@@ -288,6 +164,22 @@ namespace BH.Adapter.PowerPoint
                     serie.ChildElements.OfType<Drawing.Charts.Values>().FirstOrDefault()
                 );
 
+                if (update.CategoryColours.Count != 0)
+                {
+                    List<Drawing.Charts.DataPoint> points = serie.Elements<Drawing.Charts.DataPoint>().ToList();
+                    for (int j = 0; j < update.CategoryColours.Count && j < points.Count; j++)
+                    {
+                        Drawing.Charts.ChartShapeProperties chartProps = points[j].GetFirstChild<Drawing.Charts.ChartShapeProperties>();
+                        if (chartProps == null)
+                        {
+                            chartProps = new Drawing.Charts.ChartShapeProperties();
+                            points[j].AppendChild(chartProps);
+                        }
+                        
+                        SetFillColour(chartProps, update.CategoryColours[j]);
+                    }
+                }
+
                 serie.AppendChild(shapeProperties[i % shapeProperties.Count].DeepClone());
 
                 seriesParent.AppendChild(serie);
@@ -295,35 +187,11 @@ namespace BH.Adapter.PowerPoint
         }
 
         /***************************************************/
-
-        private void CopyStream(Stream input, Stream output)
-        {
-            byte[] buffer = new byte[32768];
-            while (true)
-            {
-                int read = input.Read(buffer, 0, buffer.Length);
-                if (read <= 0)
-                    return;
-                output.Write(buffer, 0, read);
-            }
-        }
-
-        /***************************************************/
-        /**** Fallback Methods                          ****/
-        /***************************************************/
-
-        private void UpdateSlide(SlidePart slidePart, ISlideUpdate update)
-        {
-            BH.Engine.Base.Compute.RecordError("No action was found for an update of type " + update.GetType().Name);
-        }
-
-
-        /***************************************************/
         /**** Helper Methods                            ****/
         /***************************************************/
 
         // Not used anymore but kept for reference as it shows how to edit a data table in an internal spreadsheet
-        private void UpdateEmbeddedSpreadsheet(ChartPart chartPart, ChartUpdate update) 
+        private void UpdateEmbeddedSpreadsheet(ChartPart chartPart, ChartUpdate update)
         {
             try
             {
@@ -355,8 +223,8 @@ namespace BH.Adapter.PowerPoint
                         row = new Spreadsheet.Row { RowIndex = (uint)(r + 1) };
 
                     List<object> values = r == 0 ?
-                        Enumerable.Concat<object>(new List<object> { " " }, update.Series.ToList<object>()).ToList() 
-                        : Enumerable.Concat<object>(new List<object> { update.Categories[r - 1] }, update.Data[r-1].Cast<object>()).ToList();
+                        Enumerable.Concat<object>(new List<object> { " " }, update.Series.ToList<object>()).ToList()
+                        : Enumerable.Concat<object>(new List<object> { update.Categories[r - 1] }, update.Data[r - 1].Cast<object>()).ToList();
                     List<Spreadsheet.Cell> cells = row.Elements<Spreadsheet.Cell>().ToList();
                     for (int c = 0; c < values.Count; c++)
                     {
@@ -396,11 +264,11 @@ namespace BH.Adapter.PowerPoint
 
                     List<Spreadsheet.TableColumn> columns = table.TableColumns.Elements<Spreadsheet.TableColumn>().ToList();
                     for (int c = 0; c < columns.Count; c++)
-                        columns[c].Name = c == 0 ? " " : update.Series[c-1].ToString();
+                        columns[c].Name = c == 0 ? " " : update.Series[c - 1].ToString();
                 }
 
                 // Saving the spreadsheet
-                spreadsheetDoc.Close();
+                spreadsheetDoc.Dispose();
                 stream.Close();
             }
             catch (Exception e)

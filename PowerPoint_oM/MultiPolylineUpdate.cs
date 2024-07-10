@@ -21,6 +21,7 @@
  */
 
 using BH.oM.Base;
+using BH.oM.Geometry;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -28,29 +29,29 @@ using System.Text;
 
 namespace BH.oM.PowerPoint
 {
-    [Description("Allows to update the content of chart element.")]
-    public class ChartUpdate : BHoMObject, ISlideUpdate
+    [Description("Allows to change the geometry of a shape element.")]
+    public class MultiPolylineUpdate : BHoMObject, ISlideUpdate
     {
         [Description("Number of the slide where the update needs to happen.")]
         public virtual int SlideNumber { get; set; } = 0;
 
-        [Description("Name of the chart element that needs to be updated.")]
+        [Description("Name of the shape element that needs to be updated.")]
         public virtual string ElementName { get; set; } = "";
 
-        [Description("New title for the chart. If left empty, the existing title will not be replaced.")]
-        public virtual string Title { get; set; } = "";
+        [Description("Shape to be updated.")]
+        public virtual List<PolylineData> Shapes { get; set; } = new List<PolylineData>();
 
-        [Description("Names of the series.")]
-        public virtual List<string> Series { get; set; } = new List<string>();
+        [Description("If true, the provided shapes are centred in the template box, if false, the shapes are drawn from the top left corner.")]
+        public virtual bool CentreShapes { get; set; } = true;
 
-        [Description("Names of the categories.")]
-        public virtual List<string> Categories { get; set; } = new List<string>();
+        [Description("If true, the shape aspect ratio is kept, and the shapes are made to fit the extents of the template shape. If false, the shapes are atempted to fill up the template shape as much as possible which can lead to change in aspect ratio of the provided shapes.")]
+        public virtual bool KeepShapeAspectRatio { get; set; } = true;
 
-        [Description("Numerical values for the chart data. There must be a list per serie and each list's length must be equal to the number of categories.")]
-        public virtual List<List<double>> Data { get; set; } = new List<List<double>>();
+        [Description("If true, the provided shapes that share all properties in terms of colours will be added to the same shape object. If false, all PolylineData obejcts will be added to separate shape objects.")]
+        public virtual bool GroupPolylinesWithSameProperties { get; set; } = false;
 
-        [Description("Hex colour values corresponding to each category.")]
-        public virtual List<string> CategoryColours { get; set; } = new List<string>();
+        [Description("Scale factor to be applied to the figure.")]
+        public virtual double Scale { get; set; } = 1.0;
     }
 }
 
