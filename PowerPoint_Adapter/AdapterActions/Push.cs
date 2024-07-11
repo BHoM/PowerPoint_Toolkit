@@ -55,40 +55,12 @@ namespace BH.Adapter.PowerPoint
             if (pushType == PushType.AdapterDefault)
                 pushType = PushType.UpdateOnly;
 
-
-            MemoryStream memoryStream = null;
-            PresentationDocument presentationDoc = null;
-            try
+            // Open the presentation document
+            using (PresentationDocument presentationDoc = OpenTemplateDocument())
             {
-
-                // Copy the content of the template into a MemoryStream
-
-                if (m_TemplateFileSettings != null)
-                    memoryStream = OpenTemplateFile(m_TemplateFileSettings.GetFullFileName());
-                else if (m_TemplateStream != null)
-                {
-                    memoryStream = new MemoryStream();
-                    m_TemplateStream.CopyTo(memoryStream);
-                }
-
-                if (memoryStream == null)
-                {
-                    BH.Engine.Base.Compute.RecordError("The content of the template was not extracted successfully.");
+                if (presentationDoc == null)
+                    // The error message for a missing document is already covered by OpenTemplateDocument()
                     return new List<object>();
-                }
-
-                // Open the presentation
-
-                try
-                {
-                    presentationDoc = PresentationDocument.Open(memoryStream, true);
-                }
-                catch (Exception e)
-                {
-                    memoryStream.Close();
-                    BH.Engine.Base.Compute.RecordError("Could not open the file: " + e.Message);
-                    return new List<object>();
-                }
 
                 // Update the slides
                 PresentationPart presentationPart = presentationDoc.PresentationPart;
@@ -119,33 +91,19 @@ namespace BH.Adapter.PowerPoint
                 try
                 {
                     if (m_OutputFileSettings != null)
-                        presentationDoc.Clone(m_OutputFileSettings.GetFullFileName());
+                        presentationDoc.Clone(m_OutputFileSettings.GetFullFileName()).Dispose(); // Dispose the cloned document to avoid a memory leak
                     else if (m_OutputStream != null)
                     {
                         presentationDoc.Clone(m_OutputStream);
                         m_OutputStream.Position = 0;
                     }
-
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
-                    BH.Engine.Base.Compute.RecordError("Could not save the changes: " + e.Message);
-                }
-
-            }
-            finally
-            {
-                // Release all content from memory
-                if (presentationDoc != null)
-                {
-                    presentationDoc.Dispose();
-                }
-                if (memoryStream != null)
-                {
-                    memoryStream.Close();
+                    BH.Engine.Base.Compute.RecordError(ex, "An error occurred while trying to save the changes");
+                    return new List<object>();
                 }
             }
-
 
             return objects.ToList();
         }
@@ -154,31 +112,50 @@ namespace BH.Adapter.PowerPoint
         /**** Private Methods                           ****/
         /***************************************************/
 
-        private MemoryStream OpenTemplateFile(string filePath)
+        private PresentationDocument OpenTemplateDocument()
         {
-            // Make sure the file exists
-            if (!File.Exists(filePath))
+            MemoryStream memoryStream = new MemoryStream();
+
+            if (m_TemplateFileSettings != null)
+                memoryStream = OpenTemplateFile(m_TemplateFileSettings.GetFullFileName());
+            else if (m_TemplateStream != null)
+                m_TemplateStream.CopyTo(memoryStream);
+            else
             {
-                BH.Engine.Base.Compute.RecordError($"There is no presentation with the file path {filePath}");
+                BH.Engine.Base.Compute.RecordError("Neither a template file settings nor a template file stream could be found to get the template file from.");
                 return null;
             }
 
+            try
+            {
+                return PresentationDocument.Open(memoryStream, true);
+            }
+            catch (Exception ex)
+            {
+                BH.Engine.Base.Compute.RecordError(ex, "An error occurred while trying to open the template presentation.");
+                return null;
+            }
+        }
+
+        /***************************************************/
+
+        private MemoryStream OpenTemplateFile(string filePath)
+        {
             // Copy the template file to the memory stream
             MemoryStream memoryStream = new MemoryStream();
             try
             {
-                FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                fileStream.CopyTo(memoryStream);
-                fileStream.Close();
+                using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    fileStream.CopyTo(memoryStream);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                BH.Engine.Base.Compute.RecordError("Could not open the file: " + e.Message);
+                BH.Engine.Base.Compute.RecordError(ex, "An error occurred when trying to open the template file.");
+                return null;
             }
 
             return memoryStream;
         }
-
 
         /***************************************************/
 
@@ -201,7 +178,3 @@ namespace BH.Adapter.PowerPoint
         /***************************************************/
     }
 }
-
-
-
-
