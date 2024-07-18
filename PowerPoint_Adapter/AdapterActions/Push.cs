@@ -84,7 +84,7 @@ namespace BH.Adapter.PowerPoint
                 }
                 catch (Exception ex)
                 {
-                    BH.Engine.Base.Compute.RecordError(ex, "An error occurred while opening the presentation.");
+                    BH.Engine.Base.Compute.RecordError(ex, "An error occurred while opening the template presentation.");
                     return new List<object>();
                 }
 
@@ -145,7 +145,7 @@ namespace BH.Adapter.PowerPoint
 
         private MemoryStream OpenTemplateFile(string filePath)
         {
-            if (!System.IO.File.Exists(filePath))
+            if (!File.Exists(filePath))
             {
                 BH.Engine.Base.Compute.RecordError($"The template file: {filePath} does not exist.");
                 return null;
@@ -160,7 +160,7 @@ namespace BH.Adapter.PowerPoint
             }
             catch (Exception ex)
             {
-                BH.Engine.Base.Compute.RecordError(ex, "An error occurred when trying to open the template file.");
+                BH.Engine.Base.Compute.RecordError(ex, "An error occurred when trying to open the template presentation.");
                 memoryStream.Dispose();
                 return null;
             }
