@@ -54,7 +54,7 @@ namespace BH.Adapter.PowerPoint
 
             if (element == null)
             {
-                BH.Engine.Base.Compute.RecordError($"Could not find an element with the name {update.ElementName}");
+                BH.Engine.Base.Compute.RecordError($"Could not find an element with the name {update.ElementName} on slide {update.SlideNumber}.");
                 return;
             }
 
@@ -70,15 +70,20 @@ namespace BH.Adapter.PowerPoint
                     slidePart.Slide.CommonSlideData.ShapeTree.ReplaceChild(picture, oldShape);
                     break;
                 default:
-                    BH.Engine.Base.Compute.RecordError($"The element with name '{update.ElementName}' must be either a Shape or a Picture to be updated with an image.");
+                    BH.Engine.Base.Compute.RecordError($"The element with name '{update.ElementName}' on slide {update.SlideNumber} must be either a Shape or a Picture to be updated with an image.");
                     return;
             }
 
+            if (picture == null)
+            {
+                BH.Engine.Base.Compute.RecordError($"The shape element with name '{update.ElementName}' on slide {update.SlideNumber} could not be converted into a picture.");
+                return;
+            }
+
             // Add the image to the PowerPoint
-            string imageExtension = System.IO.Path.GetExtension(update.ImageFilePath).ToLower();
             ImagePartType imageType = ImagePartType.Jpeg;
 
-            switch (System.IO.Path.GetExtension(update.ImageFilePath))
+            switch (System.IO.Path.GetExtension(update.ImageFilePath).ToLower())
             {
                 case "bmp":
                     imageType = ImagePartType.Bmp;
@@ -95,7 +100,6 @@ namespace BH.Adapter.PowerPoint
             }
 
             // Read the image file
-
             ImagePart imagePart = slidePart.AddImagePart(imageType);
 
             try
@@ -105,7 +109,7 @@ namespace BH.Adapter.PowerPoint
             }
             catch (Exception ex)
             {
-                BH.Engine.Base.Compute.RecordError(ex, "An error occurred while copying the image into the presentation.");
+                BH.Engine.Base.Compute.RecordError(ex, $"An error occurred while copying the image into the presentation. Element '{update.ElementName}' on slide {update.SlideNumber}.");
                 return;
             }
 
@@ -133,7 +137,7 @@ namespace BH.Adapter.PowerPoint
 
             if (element == null)
             {
-                BH.Engine.Base.Compute.RecordError($"Could not find an element with the name {update.ElementName}");
+                BH.Engine.Base.Compute.RecordError($"Could not find an element with the name {update.ElementName} on slide {update.SlideNumber}.");
                 return;
             }
 
@@ -149,8 +153,14 @@ namespace BH.Adapter.PowerPoint
                     slidePart.Slide.CommonSlideData.ShapeTree.ReplaceChild(picture, oldShape);
                     break;
                 default:
-                    BH.Engine.Base.Compute.RecordError($"The element with name '{update.ElementName}' must be either a Shape or a Picture to be updated with an image.");
+                    BH.Engine.Base.Compute.RecordError($"The element with name '{update.ElementName}' on slide {update.SlideNumber} must be either a Shape or a Picture to be updated with an image.");
                     return;
+            }
+
+            if (picture == null)
+            {
+                BH.Engine.Base.Compute.RecordError($"The shape element with name '{update.ElementName}' on slide {update.SlideNumber} could not be converted into a picture.");
+                return;
             }
 
             // Add the image to the PowerPoint
@@ -191,7 +201,7 @@ namespace BH.Adapter.PowerPoint
             ShapeProperties shapeProperties = (ShapeProperties)oldShape.Descendants<ShapeProperties>().Single().CloneNode(true);
             NonVisualDrawingProperties drawingProperties = (NonVisualDrawingProperties)oldShape.Descendants<NonVisualDrawingProperties>().Single().CloneNode(true);
 
-            // If the shape doesn't have a custom or preset geometry (for some reason) it does not display the image, so create a rectangular presetgeometry if it doesn't exist already.
+            // If the shape doesn't have a custom or preset geometry (for some reason the default office theme behaves this way) it does not display the image, so create a rectangular presetgeometry if it doesn't exist already.
             if (shapeProperties.Descendants<Drawing.CustomGeometry>().SingleOrDefault() == null)
                 _ = shapeProperties.Descendants<Drawing.PresetGeometry>().SingleOrDefault() ?? shapeProperties.AppendChild(new Drawing.PresetGeometry() { Preset=Drawing.ShapeTypeValues.Rectangle });
 
