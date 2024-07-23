@@ -67,13 +67,14 @@ namespace BH.Adapter.PowerPoint
             }
 
             Drawing.Charts.ChartReference reference = frame.Descendants<Drawing.Charts.ChartReference>().FirstOrDefault();
-            ChartPart chartPart;
 
+            ChartPart chartPart = null;
             try
             {
                 chartPart = slidePart.GetPartById(reference.Id) as ChartPart;
             }
-            catch
+            catch { }
+            if (chartPart == null)
             {
                 BH.Engine.Base.Compute.RecordError("Cannot find the reference to the chart " + update.ElementName + ".");
                 return;
@@ -85,7 +86,7 @@ namespace BH.Adapter.PowerPoint
                 BH.Engine.Base.Compute.RecordError("The number of data lists must be equal to the number of series provided in the update.");
                 return;
             }
-            else if (update.Data.Any(x => x.Count != update.Categories.Count))
+            if (update.Data.Any(x => x.Count != update.Categories.Count))
             {
                 BH.Engine.Base.Compute.RecordError("Each list of data must contain a number of values equal to the number of categories provided in the update.");
                 return;
@@ -95,7 +96,7 @@ namespace BH.Adapter.PowerPoint
             Drawing.Charts.Chart chart = chartPart.ChartSpace.Descendants<Drawing.Charts.Chart>().FirstOrDefault();
             if (update.Title?.Length > 0)
             {
-                Drawing.Text title = chart.GetFirstChild<Drawing.Charts.Title>()?.Descendants<Drawing.Text>().FirstOrDefault();
+                Drawing.Text title = chart.Elements<Drawing.Charts.Title>().FirstOrDefault().Descendants<Drawing.Text>().FirstOrDefault();
                 if (title != null)
                     title.Text = update.Title;
             }
@@ -126,32 +127,32 @@ namespace BH.Adapter.PowerPoint
                         ) { PointCount = new Drawing.Charts.PointCount { Val = new UInt32Value((uint)update.Categories.Count) } }
                     }
                 ),
-                seriesTemplate.GetFirstChild<Drawing.Charts.CategoryAxisData>()
+                seriesTemplate.ChildElements.OfType<Drawing.Charts.CategoryAxisData>().FirstOrDefault()
             );
 
             // Add the new series
             for (int i = 0; i < update.Series.Count; i++)
             {
-                var series = seriesTemplate.DeepClone();
+                var serie = seriesTemplate.DeepClone();
 
-                series.ReplaceChild(
+                serie.ReplaceChild(
                     new Drawing.Charts.Index { Val = new UInt32Value((uint)i) },
-                    series.ChildElements.OfType<Drawing.Charts.Index>().First()
+                    serie.ChildElements.OfType<Drawing.Charts.Index>().First()
                 );
 
-                series.ReplaceChild(
+                serie.ReplaceChild(
                     new Drawing.Charts.Order { Val = new UInt32Value((uint)i) },
-                    series.ChildElements.OfType<Drawing.Charts.Order>().First()
+                    serie.ChildElements.OfType<Drawing.Charts.Order>().First()
                 );
 
-                series.ReplaceChild(
+                serie.ReplaceChild(
                     new Drawing.Charts.SeriesText(
                         new Drawing.Charts.NumericValue(update.Series[i])
                     ),
-                    series.ChildElements.OfType<Drawing.Charts.SeriesText>().FirstOrDefault()
+                    serie.ChildElements.OfType<Drawing.Charts.SeriesText>().FirstOrDefault()
                 );
 
-                series.ReplaceChild(
+                serie.ReplaceChild(
                     new Drawing.Charts.Values(
                         new OpenXmlElement[] {
                             new Drawing.Charts.NumberLiteral(
@@ -161,12 +162,12 @@ namespace BH.Adapter.PowerPoint
                             ) { PointCount = new Drawing.Charts.PointCount { Val = new UInt32Value((uint)(update.Data[i].Count)) } }
                         }
                     ),
-                    series.ChildElements.OfType<Drawing.Charts.Values>().FirstOrDefault()
+                    serie.ChildElements.OfType<Drawing.Charts.Values>().FirstOrDefault()
                 );
 
                 if (update.CategoryColours.Count != 0)
                 {
-                    List<Drawing.Charts.DataPoint> points = series.Elements<Drawing.Charts.DataPoint>().ToList();
+                    List<Drawing.Charts.DataPoint> points = serie.Elements<Drawing.Charts.DataPoint>().ToList();
                     for (int j = 0; j < update.CategoryColours.Count && j < points.Count; j++)
                     {
                         Drawing.Charts.ChartShapeProperties chartProps = points[j].GetFirstChild<Drawing.Charts.ChartShapeProperties>();
@@ -180,9 +181,9 @@ namespace BH.Adapter.PowerPoint
                     }
                 }
 
-                series.AppendChild(shapeProperties[i % shapeProperties.Count].DeepClone());
+                serie.AppendChild(shapeProperties[i % shapeProperties.Count].DeepClone());
 
-                seriesParent.AppendChild(series);
+                seriesParent.AppendChild(serie);
             }
         }
 

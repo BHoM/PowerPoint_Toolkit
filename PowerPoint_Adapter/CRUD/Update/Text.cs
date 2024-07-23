@@ -64,28 +64,24 @@ namespace BH.Adapter.PowerPoint
                 return;
             }
 
-            // Create text body and internal properties if they do not exist.
-            TextBody textBody = shape.TextBody ?? shape.AppendChild(new TextBody(new Drawing.BodyProperties(), new Drawing.ListStyle()));
-
-            if (textBody.Elements<Drawing.Paragraph>().Count() > 1)
-            {
-                BH.Engine.Base.Compute.RecordError("The element contains more than one line of text. Please use MultiLineTextUpdate for this.");
-                return;
-            }
-
-            Drawing.Paragraph paragraph = textBody.GetFirstChild<Drawing.Paragraph>() ?? textBody.AppendChild(new Drawing.Paragraph());
-            List<Drawing.Run> runs = paragraph.Elements<Drawing.Run>().ToList();
-
             // Replace the text
-            if (runs.Count <= 1)
+            var paragraph = shape.Descendants<Drawing.Paragraph>().FirstOrDefault();
+            var runs = paragraph.Descendants<Drawing.Run>().ToList();
+
+            if (runs.Count == 0)
             {
-                Drawing.Run run = paragraph.RemoveChild(runs.FirstOrDefault()) ?? new Drawing.Run(new Drawing.Text());
-                Drawing.Text text = run.Text ?? run.AppendChild(new Drawing.Text());
-                text.Text = update.Text;
-                paragraph.AddChild(run);
+                paragraph.AddChild(new Drawing.Run(new Drawing.Text(update.Text)));
+            }
+            else if (runs.Count == 1)
+            {
+                Drawing.Text text = runs.First().Text;
+                if (text != null)
+                    text.Text = update.Text;
+                else
+                    runs.First().Text = new Drawing.Text(update.Text);
             }
             else
-            {
+            { 
                 BH.Engine.Base.Compute.RecordError("The element contains more than one line of text. Please use MultiLineTextUpdate for this.");
                 return;
             }
@@ -113,44 +109,58 @@ namespace BH.Adapter.PowerPoint
                 return;
             }
 
-            // Create text body and internal properties if they do not exist.
-            TextBody textBody = shape.TextBody ?? shape.AppendChild(new TextBody(new Drawing.BodyProperties(), new Drawing.ListStyle()));
+            // Replace the text
+            var paragraph = shape.Descendants<Drawing.Paragraph>().FirstOrDefault();
+            var runs = paragraph.Descendants<Drawing.Run>().ToList();
 
-            List<Drawing.Paragraph> paragraphs = textBody.Elements<Drawing.Paragraph>().ToList();
+            int textCount = update.Text.Count;
+            int runCount = runs.Count;
 
-            //create a new paragraph in the text body with the text for that paragraph in a run if it does not already exist, otherwise change 
-
-            bool updateColour = !string.IsNullOrEmpty(update.Colour);
-            List<Drawing.Paragraph> newParagraphs = new List<Drawing.Paragraph>();
-
-            for (int paragraphIndex = 0; paragraphIndex < update.Text.Count; paragraphIndex++)
+            string fullText = "";
+            for (int i = 0; i < update.Text.Count - 1; i++)
             {
-                Drawing.Paragraph paragraph = (Drawing.Paragraph)paragraphs.ElementAtOrDefault(paragraphIndex)?.CloneNode(true) ?? new Drawing.Paragraph();
+                fullText += update.Text[i] + Environment.NewLine;
+            }
+            fullText += update.Text[update.Text.Count - 1];
 
-                Drawing.Run run = (Drawing.Run)paragraph.GetFirstChild<Drawing.Run>()?.CloneNode(true) ?? paragraph.AppendChild(new Drawing.Run());
-
-                if (run.RunProperties != null)
-                    run.RunProperties.SpellingError = null;
+            if (runs.Count == 0)
+            {
+                paragraph.AddChild(new Drawing.Run(new Drawing.Text(fullText)));
+            }
+            else
+            {
+                Drawing.Text text = runs[0].Text;
+                if (text != null)
+                    text.Text = fullText;
                 else
-                    run.RunProperties = new Drawing.RunProperties();
+                    runs.First().Text = new Drawing.Text(fullText);
 
-                if (updateColour)
-                    SetFillColour(run.RunProperties, update.Colour);
-
-                paragraph.RemoveAllChildren<Drawing.Run>();
-                paragraph.AddChild(run);
-
-                Drawing.Text text = run.Text ?? run.AppendChild(new Drawing.Text());
-                text.Text = update.Text[paragraphIndex];
-
-                newParagraphs.Add(paragraph);
+                Drawing.RunProperties runProps = runs[0].RunProperties;
+                if (runProps != null)
+                    runProps.SpellingError = null;  //Make sure no spelling error underlines are left from template
             }
 
-            textBody.RemoveAllChildren<Drawing.Paragraph>();
-            textBody.Append(newParagraphs);
+            for (int i = 1; i < runCount; i++)
+            {
+                runs[i].Remove();
+            }
+
+            if (!string.IsNullOrEmpty(update.Colour))
+            {
+                Drawing.RunProperties rp = shape.Descendants<Drawing.RunProperties>().FirstOrDefault();
+
+                if (rp == null)
+                {
+                    rp = new Drawing.RunProperties();
+                    shape.AddChild(rp);
+                }
+                SetFillColour(rp, update.Colour);
+            }
         }
 
         /***************************************************/
 
     }
 }
+
+
