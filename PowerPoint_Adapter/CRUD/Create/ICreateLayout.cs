@@ -28,11 +28,11 @@ namespace BH.Adapter.PowerPoint
             int slideNumber = CreateSlide(presentationPart, create);
             SlidePart slidePart = GetSlide(presentationPart, slideNumber - 1);
 
-            IUpdateSlide(slidePart, comparison.TitleElement.IToUpdate(slideNumber, "Title 1"));
-            IUpdateSlide(slidePart, comparison.LeftSubtitleElement.IToUpdate(slideNumber, "Text Placeholder 2"));
-            IUpdateSlide(slidePart, comparison.RightSubtitleElement.IToUpdate(slideNumber, "Text Placeholder 4"));
-            IUpdateSlide(slidePart, comparison.LeftContentElement.IToUpdate(slideNumber, "Content Placeholder 3"));
-            IUpdateSlide(slidePart, comparison.RightContentElement.IToUpdate(slideNumber, "Content Placeholder 5"));
+            IUpdateSlide(slidePart, comparison.TitleElement.IToSlideUpdate(slideNumber, "Title 1"));
+            IUpdateSlide(slidePart, comparison.LeftSubtitleElement.IToSlideUpdate(slideNumber, "Text Placeholder 2"));
+            IUpdateSlide(slidePart, comparison.RightSubtitleElement.IToSlideUpdate(slideNumber, "Text Placeholder 4"));
+            IUpdateSlide(slidePart, comparison.LeftContentElement.IToSlideUpdate(slideNumber, "Content Placeholder 3"));
+            IUpdateSlide(slidePart, comparison.RightContentElement.IToSlideUpdate(slideNumber, "Content Placeholder 5"));
         }
 
         private void CreateLayout(PresentationPart presentationPart, ContentWithCaption contentWithCaption)
@@ -41,9 +41,9 @@ namespace BH.Adapter.PowerPoint
             int slideNumber = CreateSlide(presentationPart, create);
             SlidePart slidePart = GetSlide(presentationPart, slideNumber - 1);
 
-            IUpdateSlide(slidePart, contentWithCaption.TitleElement.IToUpdate(slideNumber, "Title 1"));
-            IUpdateSlide(slidePart, contentWithCaption.CaptionElement.IToUpdate(slideNumber, "Text Placeholder 3"));
-            IUpdateSlide(slidePart, contentWithCaption.ContentElement.IToUpdate(slideNumber, "Content Placeholder 2"));
+            IUpdateSlide(slidePart, contentWithCaption.TitleElement.IToSlideUpdate(slideNumber, "Title 1"));
+            IUpdateSlide(slidePart, contentWithCaption.CaptionElement.IToSlideUpdate(slideNumber, "Text Placeholder 3"));
+            IUpdateSlide(slidePart, contentWithCaption.ContentElement.IToSlideUpdate(slideNumber, "Content Placeholder 2"));
         }
 
         private void CreateLayout(PresentationPart presentationPart, PictureWithCaption pictureWithCaption)
@@ -52,9 +52,9 @@ namespace BH.Adapter.PowerPoint
             int slideNumber = CreateSlide(presentationPart, create);
             SlidePart slidePart = GetSlide(presentationPart, slideNumber - 1);
 
-            IUpdateSlide(slidePart, pictureWithCaption.TitleElement.IToUpdate(slideNumber, "Title 1"));
-            IUpdateSlide(slidePart, pictureWithCaption.CaptionElement.IToUpdate(slideNumber, "Text Placeholder 3"));
-            IUpdateSlide(slidePart, pictureWithCaption.ImageElement.IToUpdate(slideNumber, "Picture Placeholder 2"));
+            IUpdateSlide(slidePart, pictureWithCaption.TitleElement.IToSlideUpdate(slideNumber, "Title 1"));
+            IUpdateSlide(slidePart, pictureWithCaption.CaptionElement.IToSlideUpdate(slideNumber, "Text Placeholder 3"));
+            IUpdateSlide(slidePart, pictureWithCaption.ImageElement.IToSlideUpdate(slideNumber, "Picture Placeholder 2"));
         }
 
         private void CreateLayout(PresentationPart presentationPart, SectionHeader sectionHeader)
@@ -63,8 +63,8 @@ namespace BH.Adapter.PowerPoint
             int slideNumber = CreateSlide(presentationPart, create);
             SlidePart slidePart = GetSlide(presentationPart, slideNumber - 1);
 
-            IUpdateSlide(slidePart, sectionHeader.TitleElement.IToUpdate(slideNumber, "Title 1"));
-            IUpdateSlide(slidePart, sectionHeader.SubtitleElement.IToUpdate(slideNumber, "Text Placeholder 2"));
+            IUpdateSlide(slidePart, sectionHeader.TitleElement.IToSlideUpdate(slideNumber, "Title 1"));
+            IUpdateSlide(slidePart, sectionHeader.SubtitleElement.IToSlideUpdate(slideNumber, "Text Placeholder 2"));
         }
 
         private void CreateLayout(PresentationPart presentationPart, Title title)
@@ -73,8 +73,8 @@ namespace BH.Adapter.PowerPoint
             int slideNumber = CreateSlide(presentationPart, create);
             SlidePart slidePart = GetSlide(presentationPart, slideNumber - 1);
 
-            IUpdateSlide(slidePart, title.TitleElement.IToUpdate(slideNumber, "Title 1"));
-            IUpdateSlide(slidePart, title.SubtitleElement.IToUpdate(slideNumber, "Subtitle 2"));
+            IUpdateSlide(slidePart, title.TitleElement.IToSlideUpdate(slideNumber, "Title 1"));
+            IUpdateSlide(slidePart, title.SubtitleElement.IToSlideUpdate(slideNumber, "Subtitle 2"));
         }
 
         private void CreateLayout(PresentationPart presentationPart, TitleOnly titleOnly)
@@ -83,7 +83,7 @@ namespace BH.Adapter.PowerPoint
             int slideNumber = CreateSlide(presentationPart, create);
             SlidePart slidePart = GetSlide(presentationPart, slideNumber - 1);
 
-            IUpdateSlide(slidePart, titleOnly.TitleElement.IToUpdate(slideNumber, "Title 1"));
+            IUpdateSlide(slidePart, titleOnly.TitleElement.IToSlideUpdate(slideNumber, "Title 1"));
         }
 
         private void CreateLayout(PresentationPart presentationPart, TitleWithContent titleWithContent)
@@ -92,8 +92,8 @@ namespace BH.Adapter.PowerPoint
             int slideNumber = CreateSlide(presentationPart, create);
             SlidePart slidePart = GetSlide(presentationPart, slideNumber - 1);
 
-            IUpdateSlide(slidePart, titleWithContent.TitleElement.IToUpdate(slideNumber, "Title 1"));
-            IUpdateSlide(slidePart, titleWithContent.ContentElement.IToUpdate(slideNumber, "Content Placeholder 2"));
+            IUpdateSlide(slidePart, titleWithContent.TitleElement.IToSlideUpdate(slideNumber, "Title 1"));
+            IUpdateSlide(slidePart, titleWithContent.ContentElement.IToSlideUpdate(slideNumber, "Content Placeholder 2"));
         }
 
         private void CreateLayout(PresentationPart presentationPart, TitleWithVerticalText titleWithVerticalText)
@@ -102,8 +102,8 @@ namespace BH.Adapter.PowerPoint
             int slideNumber = CreateSlide(presentationPart, create);
             SlidePart slidePart = GetSlide(presentationPart, slideNumber - 1);
 
-            IUpdateSlide(slidePart, titleWithVerticalText.TitleElement.IToUpdate(slideNumber, "Title 1"));
-            IUpdateSlide(slidePart, titleWithVerticalText.TextElement.IToUpdate(slideNumber, "Vertical Text Placeholder 2"));
+            IUpdateSlide(slidePart, titleWithVerticalText.TitleElement.IToSlideUpdate(slideNumber, "Title 1"));
+            IUpdateSlide(slidePart, titleWithVerticalText.TextElement.IToSlideUpdate(slideNumber, "Vertical Text Placeholder 2"));
         }
 
         private void CreateLayout(PresentationPart presentationPart, TwoContent twoContent)
@@ -112,9 +112,9 @@ namespace BH.Adapter.PowerPoint
             int slideNumber = CreateSlide(presentationPart, create);
             SlidePart slidePart = GetSlide(presentationPart, slideNumber - 1);
 
-            IUpdateSlide(slidePart, twoContent.TitleElement.IToUpdate(slideNumber, "Title 1"));
-            IUpdateSlide(slidePart, twoContent.LeftContentElement.IToUpdate(slideNumber, "Content Placeholder 2"));
-            IUpdateSlide(slidePart, twoContent.RightContentElement.IToUpdate(slideNumber, "Content Placeholder 3"));
+            IUpdateSlide(slidePart, twoContent.TitleElement.IToSlideUpdate(slideNumber, "Title 1"));
+            IUpdateSlide(slidePart, twoContent.LeftContentElement.IToSlideUpdate(slideNumber, "Content Placeholder 2"));
+            IUpdateSlide(slidePart, twoContent.RightContentElement.IToSlideUpdate(slideNumber, "Content Placeholder 3"));
         }
 
         private void CreateLayout(PresentationPart presentationPart, VerticalTitleAndText verticalTitleAndText)
@@ -123,8 +123,8 @@ namespace BH.Adapter.PowerPoint
             int slideNumber = CreateSlide(presentationPart, create);
             SlidePart slidePart = GetSlide(presentationPart, slideNumber - 1);
 
-            IUpdateSlide(slidePart, verticalTitleAndText.TitleElement.IToUpdate(slideNumber, "Vertical Title 1"));
-            IUpdateSlide(slidePart, verticalTitleAndText.TextElement.IToUpdate(slideNumber, "Vertical Text Placeholder 2"));
+            IUpdateSlide(slidePart, verticalTitleAndText.TitleElement.IToSlideUpdate(slideNumber, "Vertical Title 1"));
+            IUpdateSlide(slidePart, verticalTitleAndText.TextElement.IToSlideUpdate(slideNumber, "Vertical Text Placeholder 2"));
         }
 
         private void CreateLayout(PresentationPart presentationPart, ISlideLayout layout)

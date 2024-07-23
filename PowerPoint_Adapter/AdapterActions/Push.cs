@@ -56,7 +56,6 @@ namespace BH.Adapter.PowerPoint
             objects = objects.Where(x => x != null);
 
             // Filter out objects based on the push type given
-            //TODO - need to handle DeleteThenCreate, as deletion currently happens after creating/updating slides
             switch (pushType)
             {
                 case PushType.UpdateOnly:
@@ -71,6 +70,8 @@ namespace BH.Adapter.PowerPoint
                     return new List<object>();
                 case PushType.UpdateOrCreateOnly:
                     objects = objects.Where(x => (typeof(ISlideCreate).IsAssignableFrom(x.GetType())) || (typeof(ISlideUpdate).IsAssignableFrom(x.GetType())));
+                    break;
+                default:
                     break;
             }
 
@@ -123,6 +124,8 @@ namespace BH.Adapter.PowerPoint
                         case ISlideLayout layout:
                             ICreateLayout(presentationDoc.PresentationPart, layout);
                             break;
+                        default:
+                            continue;
                     }
                 }
             
@@ -174,9 +177,9 @@ namespace BH.Adapter.PowerPoint
             return objects.ToList();
         }
 
-            /***************************************************/
-            /**** Private Methods                           ****/
-            /***************************************************/
+        /***************************************************/
+        /**** Private Methods                           ****/
+        /***************************************************/
 
         private MemoryStream OpenTemplateFile(string filePath)
         {
