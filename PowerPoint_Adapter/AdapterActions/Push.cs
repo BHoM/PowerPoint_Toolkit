@@ -63,13 +63,13 @@ namespace BH.Adapter.PowerPoint
                     break;
                 case PushType.CreateNonExisting:
                 case PushType.CreateOnly:
-                    objects = objects.Where(x => typeof(ISlideCreate).IsAssignableFrom(x.GetType()));
+                    objects = objects.Where(x => typeof(ISlideCreate).IsAssignableFrom(x.GetType()) || typeof(ISlideLayout).IsAssignableFrom(x.GetType()));
                     break;
                 case PushType.DeleteThenCreate:
                     BH.Engine.Base.Compute.RecordError($"Adapter push type {PushType.DeleteThenCreate} is not supported for the PowerPoint_Toolkit, as slides are deleted after updates are made.");
                     return new List<object>();
                 case PushType.UpdateOrCreateOnly:
-                    objects = objects.Where(x => (typeof(ISlideCreate).IsAssignableFrom(x.GetType())) || (typeof(ISlideUpdate).IsAssignableFrom(x.GetType())));
+                    objects = objects.Where(x => typeof(ISlideCreate).IsAssignableFrom(x.GetType()) || typeof(ISlideUpdate).IsAssignableFrom(x.GetType()) || typeof(ISlideLayout).IsAssignableFrom(x.GetType()));
                     break;
                 default:
                     break;
@@ -146,10 +146,20 @@ namespace BH.Adapter.PowerPoint
 
                 // Check validation of document, and throw warning if there are any errors, as they may still be recovered in powerpoint.
                 OpenXmlValidator validator = new OpenXmlValidator();
-                var errors = validator.Validate(presentationDoc);
+                IEnumerable<ValidationErrorInfo> errors = validator.Validate(presentationDoc);
 
                 if (errors.Any())
-                    BH.Engine.Base.Compute.RecordWarning($"There are some ({errors.Count()}) validation errors in the presentation caused by the some of the changes made in this push. The presentation may still be recoverable in PowerPoint, though some elements may have been affected.");
+                {
+                    string message = "";
+                    int n = 1;
+                    foreach (ValidationErrorInfo error in errors)
+                    {
+                        message += $"\n{n}: {error.Description}";
+                        n++;
+                    }
+
+                    BH.Engine.Base.Compute.RecordWarning($"There are some ({errors.Count()}) validation errors in the presentation caused by the some of the changes made in this push. The presentation may still be recoverable in PowerPoint, though some elements may have been affected.\nThe errors:{message}");
+                }
 
                 // Save the output 
                 try
