@@ -4,7 +4,7 @@ using System.Text;
 
 namespace BH.oM.PowerPoint.Layout
 {
-    public interface ISlideLayout
+    public interface ISlideLayout : IPowerPointModification
     {
     }
 }

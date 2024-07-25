@@ -53,7 +53,8 @@ namespace BH.Adapter.PowerPoint
                 return new List<object>();
             }
 
-            objects = objects.Where(x => x != null);
+            // Filter out objects that are null and aren't part of the powerpoint modification interface
+            objects = objects.Where(x => x != null && typeof(IPowerPointModification).IsAssignableFrom(x.GetType()));
 
             // Filter out objects based on the push type given
             switch (pushType)
@@ -109,7 +110,7 @@ namespace BH.Adapter.PowerPoint
                 }
 
                 // Update/create slides based upon given actions.
-                foreach (object action in objects)
+                foreach (IPowerPointModification action in objects)
                 {
                     switch (action)
                     {
@@ -130,7 +131,7 @@ namespace BH.Adapter.PowerPoint
                 }
             
                 //Handle slide deletion
-                var slideDeletes = objects.OfType<DeleteSlides>().ToList();
+                List<DeleteSlides> slideDeletes = objects.OfType<DeleteSlides>().ToList();
                 if (slideDeletes.Any())
                 {
                     DeleteSlides deleteSlide;

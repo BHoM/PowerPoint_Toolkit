@@ -5,8 +5,8 @@ using System.Text;
 
 namespace BH.oM.PowerPoint
 {
-    public interface ISlideCreate : IBHoMObject, IPowerPointModification
+    public interface IPowerPointModification : IBHoMObject
     {
-        int SlideNumber { get; set; }
+
     }
 }

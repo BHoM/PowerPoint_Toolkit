@@ -29,7 +29,7 @@ using System.Text;
 namespace BH.oM.PowerPoint
 {
     [Description("Allows for deletion of a specific slide.")]
-    public class DeleteSlides : BHoMObject, IExcelModification
+    public class DeleteSlides : BHoMObject, IExcelModification, IPowerPointModification
     {
         [Description("Number of the slides that is to be deleted.")]
         public virtual List<int> SlideNumbers { get; set; } = new List<int>();
