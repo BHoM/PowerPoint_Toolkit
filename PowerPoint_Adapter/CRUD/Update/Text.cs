@@ -119,19 +119,29 @@ namespace BH.Adapter.PowerPoint
             bool updateColour = !string.IsNullOrEmpty(update.Colour);
             List<Drawing.Paragraph> newParagraphs = new List<Drawing.Paragraph>();
 
+            Drawing.RunProperties lastRunProperties = null;
+            Drawing.ParagraphProperties lastParagraphProperties = null;
+
             for (int paragraphIndex = 0; paragraphIndex < update.Text.Count; paragraphIndex++)
             {
                 Drawing.Paragraph paragraph = (Drawing.Paragraph)paragraphs.ElementAtOrDefault(paragraphIndex)?.CloneNode(true) ?? new Drawing.Paragraph();
+
+                if (paragraph.ParagraphProperties == null && update.UseLastParagraphProperties)
+                    paragraph.AddChild(lastParagraphProperties ?? new Drawing.ParagraphProperties());
 
                 Drawing.Run run = (Drawing.Run)paragraph.GetFirstChild<Drawing.Run>()?.CloneNode(true) ?? paragraph.AppendChild(new Drawing.Run());
 
                 if (run.RunProperties != null)
                     run.RunProperties.SpellingError = null;
                 else
-                    run.RunProperties = new Drawing.RunProperties();
+                    // If using last run properties, use the last run properties (create new if null), otherwise create new run properties.
+                    run.AddChild(update.UseLastParagraphProperties ? lastRunProperties ?? new Drawing.RunProperties() : new Drawing.RunProperties());
 
                 if (updateColour)
                     SetFillColour(run.RunProperties, update.Colour);
+
+                lastRunProperties = (Drawing.RunProperties)run.RunProperties.CloneNode(true);
+                lastParagraphProperties = (Drawing.ParagraphProperties)paragraph.ParagraphProperties?.CloneNode(true);
 
                 paragraph.RemoveAllChildren<Drawing.Run>();
                 paragraph.AddChild(run);
