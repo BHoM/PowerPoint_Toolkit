@@ -37,7 +37,7 @@ namespace BH.Adapter.PowerPoint
                 SlideId nextSlideID = (SlideId)slideIDList.ChildElements[slideIndex];
                 SlideId slideID = new SlideId() { Id = newID, RelationshipId = presentationPart.GetIdOfPart(slidePart) };
                 slideIDList.InsertBefore(slideID, nextSlideID);
-                return slideIndex;
+                return slideIndex + 1;
             }
         }
 

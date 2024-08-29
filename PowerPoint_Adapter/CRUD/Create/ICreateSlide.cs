@@ -54,7 +54,7 @@ namespace BH.Adapter.PowerPoint
                 slidePart.Slide.CommonSlideData.ShapeTree.RemoveChild(picture);
 
             // Try to insert the slide at the position given, and get the slide number.
-            int slideNumber = presentationPart.SetSlideID(slidePart, create.SlideNumber - 1) + 1;
+            int slideNumber = presentationPart.SetSlideID(slidePart, create.SlideNumber - 1);
 
             List<ISlideUpdate> slideUpdates = create.SlideUpdates ?? new List<ISlideUpdate>();
 
