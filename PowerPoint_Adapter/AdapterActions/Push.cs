@@ -64,18 +64,17 @@ namespace BH.Adapter.PowerPoint
                     break;
                 case PushType.CreateNonExisting:
                 case PushType.CreateOnly:
-                    objects = objects.Where(x => typeof(ISlideCreate).IsAssignableFrom(x.GetType()) || typeof(ISlideLayout).IsAssignableFrom(x.GetType()));
+                    objects = objects.Where(x => typeof(ISlideCreate).IsAssignableFrom(x.GetType()));
                     break;
                 case PushType.DeleteThenCreate:
                     BH.Engine.Base.Compute.RecordError($"Adapter push type {PushType.DeleteThenCreate} is not supported for the PowerPoint_Toolkit, as slides are deleted after updates are made.");
                     return new List<object>();
                 case PushType.UpdateOrCreateOnly:
-                    objects = objects.Where(x => typeof(ISlideCreate).IsAssignableFrom(x.GetType()) || typeof(ISlideUpdate).IsAssignableFrom(x.GetType()) || typeof(ISlideLayout).IsAssignableFrom(x.GetType()));
+                    objects = objects.Where(x => typeof(ISlideCreate).IsAssignableFrom(x.GetType()) || typeof(ISlideUpdate).IsAssignableFrom(x.GetType()));
                     break;
                 default:
                     break;
             }
-
 
             MemoryStream memoryStream = null;
             PresentationDocument presentationDoc = null;
@@ -110,7 +109,7 @@ namespace BH.Adapter.PowerPoint
                 }
 
                 // Update/create slides based upon given actions.
-                foreach (IPowerPointModification action in objects)
+                foreach (IPowerPointModification action in objects.Cast<IPowerPointModification>())
                 {
                     switch (action)
                     {
@@ -121,9 +120,6 @@ namespace BH.Adapter.PowerPoint
                             break;
                         case ISlideCreate create:
                             ICreateSlide(presentationDoc.PresentationPart, create);
-                            break;
-                        case ISlideLayout layout:
-                            ICreateLayout(presentationDoc.PresentationPart, layout);
                             break;
                         default:
                             continue;

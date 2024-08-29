@@ -53,8 +53,25 @@ namespace BH.Adapter.PowerPoint
             foreach (Picture picture in slidePart.Slide.CommonSlideData.ShapeTree.Descendants<Picture>())
                 slidePart.Slide.CommonSlideData.ShapeTree.RemoveChild(picture);
 
-            // Insert the slide at the position given.
-            return presentationPart.SetSlideID(slidePart, create.SlideNumber - 1);
+            // Insert the slide at the position given, and get the slide number.
+            int slideNumber = presentationPart.SetSlideID(slidePart, create.SlideNumber - 1);
+
+            List<ISlideUpdate> slideUpdates = create.SlideUpdates ?? new List<ISlideUpdate>();
+
+            // If the slide number of the part is not the same as the slide number in the create, then set the updates to that number instead.
+            if (create.SlideNumber != slideNumber)
+            {
+                foreach (ISlideUpdate update in slideUpdates)
+                {
+                    update.SlideNumber = slideNumber;
+                }
+            }
+
+            // Run all slide updates
+            foreach (ISlideUpdate update in slideUpdates)
+            {
+                IUpdateSlide(slidePart, update);
+            }
         }
 
         private int CreateSlide(PresentationPart presentationPart, ISlideCreate create)

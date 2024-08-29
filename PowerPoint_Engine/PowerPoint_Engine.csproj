@@ -34,7 +34,6 @@
 
   <ItemGroup>
     <Folder Include="Compute\" />
-    <Folder Include="Create\" />
     <Folder Include="Modify\" />
     <Folder Include="Query\" />
   </ItemGroup>
