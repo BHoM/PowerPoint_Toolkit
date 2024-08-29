@@ -26,7 +26,6 @@ using BH.oM.Adapter;
 using BH.oM.Base;
 using BH.oM.Data.Collections;
 using BH.oM.PowerPoint;
-using BH.oM.PowerPoint.Layout;
 using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
