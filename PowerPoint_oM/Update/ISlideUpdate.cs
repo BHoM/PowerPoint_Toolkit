@@ -28,7 +28,7 @@ using System.Text;
 
 namespace BH.oM.PowerPoint
 {
-    public interface ISlideUpdate : IBHoMObject, IExcelModification
+    public interface ISlideUpdate : IBHoMObject, IExcelModification, IPowerPointModification
     {
         [Description("Number of the slide where the update needs to happen.")]
         int SlideNumber { get; set; }

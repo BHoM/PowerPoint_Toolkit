@@ -21,6 +21,7 @@
  */
 
 using BH.Engine.Adapter;
+using BH.Engine.Base;
 using BH.oM.Adapter;
 using BH.oM.Base;
 using BH.oM.Data.Collections;
@@ -28,6 +29,7 @@ using BH.oM.PowerPoint;
 using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
+using DocumentFormat.OpenXml.Validation;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -49,12 +51,29 @@ namespace BH.Adapter.PowerPoint
                 BH.Engine.Base.Compute.RecordError("No objects were provided for Push action.");
                 return new List<object>();
             }
-            objects = objects.Where(x => x != null).ToList();
 
-            // If unset, set the pushType to AdapterSettings' value (base AdapterSettings default is FullCRUD).
-            if (pushType == PushType.AdapterDefault)
-                pushType = PushType.UpdateOnly;
+            // Filter out objects that are null and aren't part of the powerpoint modification interface
+            IEnumerable<IPowerPointModification> modifications = objects.OfType<IPowerPointModification>();
 
+            // Filter out objects based on the push type given
+            switch (pushType)
+            {
+                case PushType.UpdateOnly:
+                    modifications = modifications.OfType<ISlideUpdate>();
+                    break;
+                case PushType.CreateNonExisting:
+                case PushType.CreateOnly:
+                    modifications = modifications.OfType<ISlideCreate>();
+                    break;
+                case PushType.DeleteThenCreate:
+                    BH.Engine.Base.Compute.RecordError($"Adapter push type {PushType.DeleteThenCreate} is not supported for the PowerPoint_Toolkit, as slides are deleted after updates are made.");
+                    return new List<object>();
+                case PushType.UpdateOrCreateOnly:
+                    modifications = modifications.OfType<ISlideUpdate>().Concat<IPowerPointModification>(modifications.OfType<ISlideCreate>());
+                    break;
+                default:
+                    break;
+            }
 
             MemoryStream memoryStream = null;
             PresentationDocument presentationDoc = null;
@@ -88,18 +107,26 @@ namespace BH.Adapter.PowerPoint
                     return new List<object>();
                 }
 
-                // Update the slides
-                PresentationPart presentationPart = presentationDoc.PresentationPart;
-                Presentation presentation = presentationPart.Presentation;
-                foreach (ISlideUpdate update in objects.OfType<ISlideUpdate>())
+                // Update/create slides based upon given actions.
+                foreach (IPowerPointModification action in modifications)
                 {
-                    SlidePart slidePart = GetSlide(presentationPart, update.SlideNumber - 1);
-                    if (slidePart != null)
-                        IUpdateSlide(slidePart, update);
+                    switch (action)
+                    {
+                        case ISlideUpdate update:
+                            SlidePart slidePart = GetSlide(presentationDoc.PresentationPart, update.SlideNumber - 1);
+                            if (slidePart != null)
+                                IUpdateSlide(slidePart, update);
+                            break;
+                        case ISlideCreate create:
+                            ICreateSlide(presentationDoc.PresentationPart, create);
+                            break;
+                        default:
+                            continue;
+                    }
                 }
-
+            
                 //Handle slide deletion
-                var slideDeletes = objects.OfType<DeleteSlides>().ToList();
+                List<DeleteSlides> slideDeletes = modifications.OfType<DeleteSlides>().ToList();
                 if (slideDeletes.Any())
                 {
                     DeleteSlides deleteSlide;
@@ -110,7 +137,24 @@ namespace BH.Adapter.PowerPoint
                     }
                     else
                         deleteSlide = slideDeletes[0];
-                    DeleteSlides(presentationPart, deleteSlide);
+                    DeleteSlides(presentationDoc.PresentationPart, deleteSlide);
+                }
+
+                // Check validation of document, and throw warning if there are any errors, as they may still be recovered in powerpoint.
+                OpenXmlValidator validator = new OpenXmlValidator();
+                IEnumerable<ValidationErrorInfo> errors = validator.Validate(presentationDoc);
+
+                if (errors.Any())
+                {
+                    string message = "";
+                    int n = 1;
+                    foreach (ValidationErrorInfo error in errors)
+                    {
+                        message += $"\n{n}: {error.Description}";
+                        n++;
+                    }
+
+                    BH.Engine.Base.Compute.RecordWarning($"There are some ({errors.Count()}) validation errors in the presentation caused by the some of the changes made in this push. The presentation may still be recoverable in PowerPoint, though some elements may have been affected.\nThe errors:{message}");
                 }
 
                 // Save the output 
@@ -136,7 +180,7 @@ namespace BH.Adapter.PowerPoint
                 memoryStream?.Close();
             }
 
-            return objects.ToList();
+            return modifications.ToList<object>();
         }
 
         /***************************************************/
@@ -175,7 +219,7 @@ namespace BH.Adapter.PowerPoint
             var slideIds = presentationPart.Presentation.SlideIdList.ChildElements;
             if (index > slideIds.Count)
             {
-                BH.Engine.Base.Compute.RecordError($"The slide index is too high. There are only {slideIds.Count} in the presentation.");
+                BH.Engine.Base.Compute.RecordError($"The slide index is too high. There are only {slideIds.Count} slides in the presentation.");
                 return null;
             }
 

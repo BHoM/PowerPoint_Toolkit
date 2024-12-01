@@ -23,17 +23,11 @@
 using BH.oM.Base;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Text;
 
 namespace BH.oM.PowerPoint
 {
-    [Description("Allows for deletion of a specific slide.")]
-    public class DeleteSlides : BHoMObject, IExcelModification, IPowerPointModification
+    public interface ISlideCreate : IBHoMObject, IPowerPointModification
     {
-        [Description("Number of the slides that is to be deleted.")]
-        public virtual List<int> SlideNumbers { get; set; } = new List<int>();
-
     }
 }
-

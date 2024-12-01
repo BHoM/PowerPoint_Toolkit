@@ -50,39 +50,40 @@ namespace BH.Adapter.PowerPoint
         {
 
             // Get the image element matching the name provided in update
-            NonVisualDrawingProperties matchingProperty = slidePart.Slide.Descendants<NonVisualDrawingProperties>()
-                .Where(x => x.Name.Value == update.ElementName)
-                .FirstOrDefault();
+            OpenXmlElement element = GetElementByName(slidePart, update.ElementName);
 
-            if (matchingProperty == null)
+            if (element == null)
             {
-                BH.Engine.Base.Compute.RecordError("Could not find the element with the name " + update.ElementName);
+                BH.Engine.Base.Compute.RecordError($"Could not find an element with the name {update.ElementName} on slide {update.SlideNumber}.");
                 return;
             }
 
-            Picture picture = matchingProperty.Parent?.Parent as Picture;
+            Picture picture;
+
+            switch (element)
+            {
+                case Picture oldPicture:
+                    picture = oldPicture;
+                    break;
+                case Shape oldShape:
+                    picture = ConvertShapeToPicture(oldShape);
+                    slidePart.Slide.CommonSlideData.ShapeTree.ReplaceChild(picture, oldShape);
+                    break;
+                default:
+                    BH.Engine.Base.Compute.RecordError($"The element with name '{update.ElementName}' on slide {update.SlideNumber} must be either a Shape or a Picture to be updated with an image.");
+                    return;
+            }
+
             if (picture == null)
             {
-                BH.Engine.Base.Compute.RecordError("The element with the name " + update.ElementName + " is not an image.");
-                return;
-            }
-
-            // Read the image file
-            FileStream stream;
-            try
-            {
-                stream = File.OpenRead(update.ImageFilePath);
-            }
-            catch (Exception e)
-            {
-                BH.Engine.Base.Compute.RecordError("The image could not be opened: " + e.Message);
+                BH.Engine.Base.Compute.RecordError($"The shape element with name '{update.ElementName}' on slide {update.SlideNumber} could not be converted into a picture.");
                 return;
             }
 
             // Add the image to the PowerPoint
-            string imageExtension = System.IO.Path.GetExtension(update.ImageFilePath).ToLower();
             ImagePartType imageType = ImagePartType.Jpeg;
-            switch (System.IO.Path.GetExtension(update.ImageFilePath))
+
+            switch (System.IO.Path.GetExtension(update.ImageFilePath).ToLower())
             {
                 case "bmp":
                     imageType = ImagePartType.Bmp;
@@ -98,9 +99,19 @@ namespace BH.Adapter.PowerPoint
                     break;
             }
 
+            // Read the image file
             ImagePart imagePart = slidePart.AddImagePart(imageType);
-            imagePart.FeedData(stream);
-            stream.Close();
+
+            try
+            {
+                using (FileStream stream = File.OpenRead(update.ImageFilePath))
+                    imagePart.FeedData(stream);
+            }
+            catch (Exception ex)
+            {
+                BH.Engine.Base.Compute.RecordError(ex, $"An error occurred while copying the image into the presentation. Element '{update.ElementName}' on slide {update.SlideNumber}.");
+                return;
+            }
 
             // Link the image element to the new image file
             Drawing.Blip blip = picture.BlipFill?.Blip;
@@ -116,28 +127,39 @@ namespace BH.Adapter.PowerPoint
 
         private void UpdateSlide(SlidePart slidePart, ImageUpdateStream update)
         {
-
             if (update.ImageStream == null)
             {
                 BH.Engine.Base.Compute.RecordError("Null stream provided. Unable to update image.");
                 return;
             }
 
-            // Get the image element matching the name provided in update
-            NonVisualDrawingProperties matchingProperty = slidePart.Slide.Descendants<NonVisualDrawingProperties>()
-                .Where(x => x.Name.Value == update.ElementName)
-                .FirstOrDefault();
+            OpenXmlElement element = GetElementByName(slidePart, update.ElementName);
 
-            if (matchingProperty == null)
+            if (element == null)
             {
-                BH.Engine.Base.Compute.RecordError("Could not find the element with the name " + update.ElementName);
+                BH.Engine.Base.Compute.RecordError($"Could not find an element with the name {update.ElementName} on slide {update.SlideNumber}.");
                 return;
             }
 
-            Picture picture = matchingProperty.Parent?.Parent as Picture;
+            Picture picture;
+
+            switch (element)
+            {
+                case Picture oldPicture:
+                    picture = oldPicture;
+                    break;
+                case Shape oldShape:
+                    picture = ConvertShapeToPicture(oldShape);
+                    slidePart.Slide.CommonSlideData.ShapeTree.ReplaceChild(picture, oldShape);
+                    break;
+                default:
+                    BH.Engine.Base.Compute.RecordError($"The element with name '{update.ElementName}' on slide {update.SlideNumber} must be either a Shape or a Picture to be updated with an image.");
+                    return;
+            }
+
             if (picture == null)
             {
-                BH.Engine.Base.Compute.RecordError("The element with the name " + update.ElementName + " is not an image.");
+                BH.Engine.Base.Compute.RecordError($"The shape element with name '{update.ElementName}' on slide {update.SlideNumber} could not be converted into a picture.");
                 return;
             }
 
@@ -173,6 +195,34 @@ namespace BH.Adapter.PowerPoint
         }
 
         /***************************************************/
+
+        private Picture ConvertShapeToPicture(Shape oldShape)
+        {
+            ShapeProperties shapeProperties = (ShapeProperties)oldShape.Descendants<ShapeProperties>().Single().CloneNode(true);
+            NonVisualDrawingProperties drawingProperties = (NonVisualDrawingProperties)oldShape.Descendants<NonVisualDrawingProperties>().Single().CloneNode(true);
+
+            // If the shape doesn't have a custom or preset geometry (for some reason the default office theme behaves this way) it does not display the image, so create a rectangular presetgeometry if it doesn't exist already.
+            if (shapeProperties.Descendants<Drawing.CustomGeometry>().SingleOrDefault() == null)
+                _ = shapeProperties.Descendants<Drawing.PresetGeometry>().SingleOrDefault() ?? shapeProperties.AppendChild(new Drawing.PresetGeometry() { Preset=Drawing.ShapeTypeValues.Rectangle });
+
+            Picture picture = new Picture
+            (
+                new NonVisualPictureProperties
+                (
+                    drawingProperties,
+                    new NonVisualPictureDrawingProperties(),
+                    new ApplicationNonVisualDrawingProperties()
+                ),
+                new BlipFill
+                (
+                    new Drawing.Blip(),
+                    new Drawing.Stretch()
+                ),
+                shapeProperties
+            );
+
+            return picture;
+        }
 
     }
 }
