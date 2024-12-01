@@ -68,7 +68,7 @@ namespace BH.Adapter.PowerPoint
             uint maxSlideID = 0;
             if (slideIDList.ChildElements.Count() > 0)
                 maxSlideID = slideIDList.ChildElements
-                    .Cast<SlideId>()
+                    .OfType<SlideId>()
                     .Max(x => x.Id.Value);
             return maxSlideID;
         }

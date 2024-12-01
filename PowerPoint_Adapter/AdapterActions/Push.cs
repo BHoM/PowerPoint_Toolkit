@@ -53,23 +53,23 @@ namespace BH.Adapter.PowerPoint
             }
 
             // Filter out objects that are null and aren't part of the powerpoint modification interface
-            objects = objects.Where(x => x != null && typeof(IPowerPointModification).IsAssignableFrom(x.GetType()));
+            IEnumerable<IPowerPointModification> modifications = objects.OfType<IPowerPointModification>();
 
             // Filter out objects based on the push type given
             switch (pushType)
             {
                 case PushType.UpdateOnly:
-                    objects = objects.Where(x => typeof(ISlideUpdate).IsAssignableFrom(x.GetType()));
+                    modifications = modifications.OfType<ISlideUpdate>();
                     break;
                 case PushType.CreateNonExisting:
                 case PushType.CreateOnly:
-                    objects = objects.Where(x => typeof(ISlideCreate).IsAssignableFrom(x.GetType()));
+                    modifications = modifications.OfType<ISlideCreate>();
                     break;
                 case PushType.DeleteThenCreate:
                     BH.Engine.Base.Compute.RecordError($"Adapter push type {PushType.DeleteThenCreate} is not supported for the PowerPoint_Toolkit, as slides are deleted after updates are made.");
                     return new List<object>();
                 case PushType.UpdateOrCreateOnly:
-                    objects = objects.Where(x => typeof(ISlideCreate).IsAssignableFrom(x.GetType()) || typeof(ISlideUpdate).IsAssignableFrom(x.GetType()));
+                    modifications = modifications.OfType<ISlideUpdate>().Concat<IPowerPointModification>(modifications.OfType<ISlideCreate>());
                     break;
                 default:
                     break;
@@ -108,7 +108,7 @@ namespace BH.Adapter.PowerPoint
                 }
 
                 // Update/create slides based upon given actions.
-                foreach (IPowerPointModification action in objects.Cast<IPowerPointModification>())
+                foreach (IPowerPointModification action in modifications)
                 {
                     switch (action)
                     {
@@ -126,7 +126,7 @@ namespace BH.Adapter.PowerPoint
                 }
             
                 //Handle slide deletion
-                List<DeleteSlides> slideDeletes = objects.OfType<DeleteSlides>().ToList();
+                List<DeleteSlides> slideDeletes = modifications.OfType<DeleteSlides>().ToList();
                 if (slideDeletes.Any())
                 {
                     DeleteSlides deleteSlide;
@@ -180,7 +180,7 @@ namespace BH.Adapter.PowerPoint
                 memoryStream?.Close();
             }
 
-            return objects.ToList();
+            return modifications.ToList<object>();
         }
 
         /***************************************************/
