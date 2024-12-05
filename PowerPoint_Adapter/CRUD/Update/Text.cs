@@ -109,53 +109,51 @@ namespace BH.Adapter.PowerPoint
                 return;
             }
 
-            // Replace the text
-            var paragraph = shape.Descendants<Drawing.Paragraph>().FirstOrDefault();
-            var runs = paragraph.Descendants<Drawing.Run>().ToList();
+            // Create text body and internal properties if they do not exist.
+            TextBody textBody = shape.TextBody ?? shape.AppendChild(new TextBody(new Drawing.BodyProperties(), new Drawing.ListStyle()));
 
-            int textCount = update.Text.Count;
-            int runCount = runs.Count;
+            List<Drawing.Paragraph> paragraphs = textBody.Elements<Drawing.Paragraph>().ToList();
 
-            string fullText = "";
-            for (int i = 0; i < update.Text.Count - 1; i++)
-            {
-                fullText += update.Text[i] + Environment.NewLine;
-            }
-            fullText += update.Text[update.Text.Count - 1];
+            //create a new paragraph in the text body with the text for that paragraph in a run if it does not already exist, otherwise change 
 
-            if (runs.Count == 0)
+            bool updateColour = !string.IsNullOrEmpty(update.Colour);
+            List<Drawing.Paragraph> newParagraphs = new List<Drawing.Paragraph>();
+
+            Drawing.RunProperties lastRunProperties = null;
+            Drawing.ParagraphProperties lastParagraphProperties = null;
+
+            for (int paragraphIndex = 0; paragraphIndex < update.Text.Count; paragraphIndex++)
             {
-                paragraph.AddChild(new Drawing.Run(new Drawing.Text(fullText)));
-            }
-            else
-            {
-                Drawing.Text text = runs[0].Text;
-                if (text != null)
-                    text.Text = fullText;
+                Drawing.Paragraph paragraph = (Drawing.Paragraph)paragraphs.ElementAtOrDefault(paragraphIndex)?.CloneNode(true) ?? new Drawing.Paragraph();
+
+                if (paragraph.ParagraphProperties == null && update.UseLastParagraphProperties)
+                    paragraph.AddChild(lastParagraphProperties ?? new Drawing.ParagraphProperties());
+
+                Drawing.Run run = (Drawing.Run)paragraph.GetFirstChild<Drawing.Run>()?.CloneNode(true) ?? paragraph.AppendChild(new Drawing.Run());
+
+                if (run.RunProperties != null)
+                    run.RunProperties.SpellingError = null;
                 else
-                    runs.First().Text = new Drawing.Text(fullText);
+                    // If using last run properties, use the last run properties (create new if null), otherwise create new run properties.
+                    run.AddChild(update.UseLastParagraphProperties ? lastRunProperties ?? new Drawing.RunProperties() : new Drawing.RunProperties());
 
-                Drawing.RunProperties runProps = runs[0].RunProperties;
-                if (runProps != null)
-                    runProps.SpellingError = null;  //Make sure no spelling error underlines are left from template
+                if (updateColour)
+                    SetFillColour(run.RunProperties, update.Colour);
+
+                lastRunProperties = (Drawing.RunProperties)run.RunProperties.CloneNode(true);
+                lastParagraphProperties = (Drawing.ParagraphProperties)paragraph.ParagraphProperties?.CloneNode(true);
+
+                paragraph.RemoveAllChildren<Drawing.Run>();
+                paragraph.AddChild(run);
+
+                Drawing.Text text = run.Text ?? run.AppendChild(new Drawing.Text());
+                text.Text = update.Text[paragraphIndex];
+
+                newParagraphs.Add(paragraph);
             }
 
-            for (int i = 1; i < runCount; i++)
-            {
-                runs[i].Remove();
-            }
-
-            if (!string.IsNullOrEmpty(update.Colour))
-            {
-                Drawing.RunProperties rp = shape.Descendants<Drawing.RunProperties>().FirstOrDefault();
-
-                if (rp == null)
-                {
-                    rp = new Drawing.RunProperties();
-                    shape.AddChild(rp);
-                }
-                SetFillColour(rp, update.Colour);
-            }
+            textBody.RemoveAllChildren<Drawing.Paragraph>();
+            textBody.Append(newParagraphs);
         }
 
         /***************************************************/

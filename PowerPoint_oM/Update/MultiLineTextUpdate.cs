@@ -42,6 +42,9 @@ namespace BH.oM.PowerPoint
 
         [Description("Colour of the text element that needs to be updated.")]
         public virtual string Colour { get; set; } = "";
+
+        [Description("Whether to use the properties of the previous paragraph for subsequent paragraphs where there is no text to update. If set to false, new paragraphs will have default properties with no indentation. Default false.")]
+        public virtual bool UseLastParagraphProperties { get; set; } = false;
     }
 }
 
