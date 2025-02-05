@@ -101,25 +101,33 @@ namespace BH.Adapter.PowerPoint
 
         private static GraphicFrame ConvertToGraphicFrame(Shape oldShape, int rowCount, int columnCount)
         {
-            ShapeProperties shapeProperties = (ShapeProperties)oldShape.Descendants<ShapeProperties>().Single().CloneNode(true);
+            ShapeProperties shapeProperties = (ShapeProperties)oldShape.Descendants<ShapeProperties>().Single();
             NonVisualDrawingProperties drawingProps = (NonVisualDrawingProperties)oldShape.Descendants<NonVisualDrawingProperties>().Single().CloneNode(true);
 
-            return new GraphicFrame(
+            GraphicFrame gf =  new GraphicFrame(
                 new NonVisualGraphicFrameProperties(
                     drawingProps,
                     new NonVisualGraphicFrameDrawingProperties(),
                     new ApplicationNonVisualDrawingProperties()
                     ),
-                new D.Graphic(
-                    new D.GraphicData(
-                        ConstructNewTable(rowCount, columnCount)
-                        ) { Uri = "http://schemas.openxmlformats.org/drawingml/2006/table" }
-                    ),
-                shapeProperties
+                new Transform() { Offset = (D.Offset)shapeProperties.Transform2D.Offset.CloneNode(true), Extents = (D.Extents)shapeProperties.Transform2D.Extents.CloneNode(true) }
                 );
+
+            (long width, long height) = GetSizeOfShape(shapeProperties);
+
+            gf.Append(new D.Graphic(new D.GraphicData(ConstructNewTable(rowCount, columnCount, width, height)) { Uri = "http://schemas.openxmlformats.org/drawingml/2006/table" }));
+
+            return gf;
         }
 
-        private static D.Table ConstructNewTable(int rowCount, int columnCount)
+        private static (long, long) GetSizeOfShape(ShapeProperties shapeProps)
+        {
+            long width = shapeProps.Transform2D.Extents.Cx;
+            long height = shapeProps.Transform2D.Extents.Cy;
+            return (width, height);
+        }
+
+        private static D.Table ConstructNewTable(int rowCount, int columnCount, long shapeWidth, long shapeHeight)
         {
             D.Table table = new D.Table();
             D.TableProperties tableProperties = new D.TableProperties();
@@ -127,7 +135,7 @@ namespace BH.Adapter.PowerPoint
 
             for (int i = 0; i < columnCount; i++)
             {
-                tGrid.Append(new D.GridColumn());
+                tGrid.Append(new D.GridColumn() { Width = shapeWidth / columnCount });
             }
 
             table.Append(tableProperties);
@@ -135,7 +143,7 @@ namespace BH.Adapter.PowerPoint
 
             for (int row = 0; row < rowCount; row++)
             {
-                D.TableRow tRow = new D.TableRow();
+                D.TableRow tRow = new D.TableRow() { Height = shapeHeight / rowCount };
                 for (int col = 0; col < columnCount; col++)
                 {
                     tRow.Append(ConstructNewTableCell());
@@ -146,7 +154,7 @@ namespace BH.Adapter.PowerPoint
             return table;
         }
 
-        private static D.TableCell ConstructNewTableCell()
+        private static D.TableCell ConstructNewTableCell(int fontSize = 20)
         {
             D.TableCell cell = new D.TableCell();
             D.TableCellProperties properties = new D.TableCellProperties();
@@ -154,9 +162,10 @@ namespace BH.Adapter.PowerPoint
             D.BodyProperties bodyProperties = new D.BodyProperties();
             D.ListStyle listStyle = new D.ListStyle();
 
+            //TODO: figure out what to do about font size
             D.Paragraph par = new D.Paragraph();
             D.Run run = new D.Run();
-            D.RunProperties runProps = new D.RunProperties();
+            D.RunProperties runProps = new D.RunProperties() { FontSize = fontSize };
             D.Text text = new D.Text(); //.Text property is what will be modified later
             run.Append(runProps);
             run.Append(text);

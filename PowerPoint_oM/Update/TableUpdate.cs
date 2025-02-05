@@ -16,5 +16,8 @@ namespace BH.oM.PowerPoint
 
         [Description("Content to be placed into the table. Outer list indexes correspond to row numbers, and inner list indexes correspond to the column numbers. each row must be the same length.")]
         public virtual List<List<string>> Contents { get; set; }
+
+        [Description("The font size of any text in the table.")]
+        public virtual int UpdatedTextFontSize { get; set; } = 20;
     }
 }
