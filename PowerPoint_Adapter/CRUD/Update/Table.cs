@@ -81,7 +81,9 @@ namespace BH.Adapter.PowerPoint
                 {
                     try
                     {
-                        cell.TextBody.Elements<D.Paragraph>().Single().Elements<D.Run>().Single().Text.Text = update.Contents[r][c];
+                        D.Run run = cell.TextBody.Elements<D.Paragraph>().Single().Elements<D.Run>().Single();
+                        run.Text.Text = update.Contents[r][c];
+                        run.RunProperties.FontSize = update.UpdatedTextFontSize;
                     }
                     catch (InvalidOperationException ex)
                     {
@@ -154,7 +156,7 @@ namespace BH.Adapter.PowerPoint
             return table;
         }
 
-        private static D.TableCell ConstructNewTableCell(int fontSize = 20)
+        private static D.TableCell ConstructNewTableCell()
         {
             D.TableCell cell = new D.TableCell();
             D.TableCellProperties properties = new D.TableCellProperties();
@@ -165,7 +167,7 @@ namespace BH.Adapter.PowerPoint
             //TODO: figure out what to do about font size
             D.Paragraph par = new D.Paragraph();
             D.Run run = new D.Run();
-            D.RunProperties runProps = new D.RunProperties() { FontSize = fontSize };
+            D.RunProperties runProps = new D.RunProperties();
             D.Text text = new D.Text(); //.Text property is what will be modified later
             run.Append(runProps);
             run.Append(text);
