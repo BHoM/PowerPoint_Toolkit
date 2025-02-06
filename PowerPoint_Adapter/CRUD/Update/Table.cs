@@ -83,7 +83,7 @@ namespace BH.Adapter.PowerPoint
                     {
                         D.Run run = cell.TextBody.Elements<D.Paragraph>().Single().Elements<D.Run>().Single();
                         run.Text.Text = update.Contents[r][c];
-                        run.RunProperties.FontSize = update.UpdatedTextFontSize;
+                        run.RunProperties.FontSize = update.UpdatedTextFontSize * 100;
                     }
                     catch (InvalidOperationException ex)
                     {
