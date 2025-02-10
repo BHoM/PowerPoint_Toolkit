@@ -91,7 +91,7 @@ namespace BH.Adapter.PowerPoint
                     }
                     catch (Exception ex)
                     {
-                        BH.Engine.Base.Compute.RecordWarning(ex, $"An error occurred while trying to update cell in row {r} column {c}. Occurred in element `{update.ElementName}` on slide {update.SlideNumber}.");
+                        BH.Engine.Base.Compute.RecordError(ex, $"An error occurred while trying to update cell in row {r} column {c}. Occurred in element `{update.ElementName}` on slide {update.SlideNumber}.");
                         return;
                     }
                     c++;
