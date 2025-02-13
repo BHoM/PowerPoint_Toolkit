@@ -81,7 +81,21 @@ namespace BH.Adapter.PowerPoint
                 {
                     try
                     {
-                        D.Run run = cell.TextBody.Elements<D.Paragraph>().Single().Elements<D.Run>().Single();
+                        D.Paragraph par = cell.TextBody.Elements<D.Paragraph>().SingleOrDefault();
+                        if (par == null)
+                        {
+                            par = new D.Paragraph();
+                            par.AddChild(new D.Run(new D.RunProperties(), new D.Text()));
+                            cell.TextBody.AddChild(par);
+                        }
+
+                        D.Run run = par.Elements<D.Run>().SingleOrDefault();
+                        if (run == null)
+                        {
+                            run = new D.Run(new D.RunProperties(), new D.Text());
+                            par.AddChild(run);
+                        }
+
                         run.Text.Text = update.Contents[r][c];
                         run.RunProperties.FontSize = update.UpdatedTextFontSize * 100;
                     }
