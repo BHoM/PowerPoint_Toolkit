@@ -37,15 +37,9 @@ namespace BH.Adapter.PowerPoint
     {
         private void UpdateSlide(SlidePart slidePart, TableUpdate update)
         {
-            if (update.Contents.IsNullOrEmpty())
+            if (update.Contents == null || update.Contents.IsNullOrEmpty())
             {
                 BH.Engine.Base.Compute.RecordError("The table update has no contents to update the table with.");
-                return;
-            }
-
-            if (!update.Contents.All(x => update.Contents[0].Count == x.Count))
-            {
-                BH.Engine.Base.Compute.RecordError("The length of all of the rows in Content must be equal.");
                 return;
             }
 
@@ -57,6 +51,12 @@ namespace BH.Adapter.PowerPoint
 
             int rowCount = update.Contents.Count;
             int columnCount = update.Contents[0].Count;
+
+            if (!update.Contents.All(x => columnCount == x.Count))
+            {
+                BH.Engine.Base.Compute.RecordError("The length of all of the rows in Content must be equal.");
+                return;
+            }
 
             OpenXmlElement element = GetElementByName(slidePart, update.ElementName);
             GraphicFrame frame; //tables are contained within graphic frames
@@ -75,7 +75,7 @@ namespace BH.Adapter.PowerPoint
                     return;
             }
 
-            D.Table table = frame.Graphic?.GraphicData.GetFirstChild<D.Table>();
+            D.Table table = frame.Graphic?.GraphicData?.GetFirstChild<D.Table>();
 
             if (table == null)
             {
@@ -200,7 +200,6 @@ namespace BH.Adapter.PowerPoint
             D.BodyProperties bodyProperties = new D.BodyProperties();
             D.ListStyle listStyle = new D.ListStyle();
 
-            //TODO: figure out what to do about font size
             D.Paragraph par = new D.Paragraph();
             D.Run run = new D.Run();
             D.RunProperties runProps = new D.RunProperties();

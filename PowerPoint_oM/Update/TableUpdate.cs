@@ -34,10 +34,10 @@ namespace BH.oM.PowerPoint
         public virtual int SlideNumber { get; set; } = -1;
 
         [Description("Name of the table that needs to be updated.")]
-        public virtual string ElementName { get; set; }
+        public virtual string ElementName { get; set; } = "";
 
         [Description("Content to be placed into the table. Outer list indexes correspond to row numbers, and inner list indexes correspond to the column numbers. each row must be the same length.")]
-        public virtual List<List<string>> Contents { get; set; }
+        public virtual List<List<string>> Contents { get; set; } = new List<List<string>>();
 
         [Description("The font size of any text in the table.")]
         public virtual int UpdatedTextFontSize { get; set; } = 20;
