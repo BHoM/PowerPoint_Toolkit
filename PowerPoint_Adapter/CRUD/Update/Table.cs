@@ -52,11 +52,20 @@ namespace BH.Adapter.PowerPoint
             int rowCount = update.Contents.Count;
             int columnCount = update.Contents[0].Count;
 
-            if (!update.Contents.All(x => columnCount == x.Count))
+            if (update.Contents.Any(x => columnCount != x.Count))
             {
                 BH.Engine.Base.Compute.RecordError("The length of all of the rows in Content must be equal.");
                 return;
             }
+
+            if (update.HeaderRow.Count > 0 && update.HeaderRow.Count != columnCount)
+            {
+                BH.Engine.Base.Compute.RecordError($"The length of the header row ({update.HeaderRow.Count}) must be equal to the length of the content rows ({columnCount}).");
+                return;
+            }
+
+            if (update.HeaderRow.Count > 0)
+                rowCount += 1;
 
             OpenXmlElement element = GetElementByName(slidePart, update.ElementName);
             GraphicFrame frame; //tables are contained within graphic frames
@@ -97,6 +106,7 @@ namespace BH.Adapter.PowerPoint
 
             int r = 0;
             int c = 0;
+            bool headerRow = update.HeaderRow.Count != 0;
             foreach (D.TableRow row in rows)
             {
                 foreach (D.TableCell cell in row.Descendants<D.TableCell>())
@@ -112,14 +122,26 @@ namespace BH.Adapter.PowerPoint
                         }
 
                         D.Run run = par.Elements<D.Run>().SingleOrDefault();
+                        int? fontSize = null;
                         if (run == null)
                         {
                             run = new D.Run(new D.RunProperties(), new D.Text());
                             par.AddChild(run);
                         }
+                        else
+                            fontSize = run.RunProperties.FontSize / 100;
 
-                        run.Text.Text = update.Contents[r][c];
-                        run.RunProperties.FontSize = update.UpdatedTextFontSize * 100;
+                        if (update.UpdatedTextFontSize <= 0)
+                            fontSize = fontSize ?? 20;
+                        else
+                            fontSize = update.UpdatedTextFontSize;
+
+                        if (headerRow)
+                            run.Text.Text = update.HeaderRow[c];
+                        else 
+                            run.Text.Text = update.Contents[r][c];
+
+                        run.RunProperties.FontSize = fontSize * 100;
                     }
                     catch (InvalidOperationException ex)
                     {

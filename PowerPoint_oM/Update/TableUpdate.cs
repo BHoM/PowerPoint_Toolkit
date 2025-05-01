@@ -36,10 +36,13 @@ namespace BH.oM.PowerPoint
         [Description("Name of the table that needs to be updated.")]
         public virtual string ElementName { get; set; } = "";
 
+        [Description("Header row for the table. Leave empty to ignore and just make a table using the content. If not empty this list must be the same length as the rows in content.")]
+        public virtual List<string> HeaderRow { get; set; } = new List<string>();
+
         [Description("Content to be placed into the table. Outer list indexes correspond to row numbers, and inner list indexes correspond to the column numbers. each row must be the same length.")]
         public virtual List<List<string>> Contents { get; set; } = new List<List<string>>();
 
-        [Description("The font size of any text in the table.")]
-        public virtual int UpdatedTextFontSize { get; set; } = 20;
+        [Description("The font size of any text in the table. If set to 0, does not change the font size of elements in a previous table, or if the table is a placeholder, defaults to font size of 20.")]
+        public virtual int UpdatedTextFontSize { get; set; } = 0;
     }
 }
