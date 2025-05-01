@@ -137,8 +137,11 @@ namespace BH.Adapter.PowerPoint
                             fontSize = update.UpdatedTextFontSize;
 
                         if (headerRow)
+                        {
                             run.Text.Text = update.HeaderRow[c];
-                        else 
+                            headerRow = false;
+                        }
+                        else
                             run.Text.Text = update.Contents[r][c];
 
                         run.RunProperties.FontSize = fontSize * 100;
