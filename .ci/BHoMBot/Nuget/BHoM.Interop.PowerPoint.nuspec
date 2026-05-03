@@ -18,7 +18,7 @@
       <group targetFramework="netstandard2.0">
         <dependency id="NETStandard.Library" version="2.0.3" />
         <dependency id="Microsoft.CSharp" version="4.7.0" />
-        <dependency id="DocumentFormat.OpenXml" version="2.19.0" />
+        <dependency id="DocumentFormat.OpenXml" version="3.1.1" />
       </group>
     </dependencies>
   </metadata>

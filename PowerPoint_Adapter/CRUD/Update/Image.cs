@@ -81,7 +81,7 @@ namespace BH.Adapter.PowerPoint
             }
 
             // Add the image to the PowerPoint
-            ImagePartType imageType = ImagePartType.Jpeg;
+            PartTypeInfo imageType = ImagePartType.Jpeg;
 
             switch (System.IO.Path.GetExtension(update.ImageFilePath).ToLower())
             {
@@ -164,7 +164,7 @@ namespace BH.Adapter.PowerPoint
             }
 
             // Add the image to the PowerPoint
-            ImagePartType imageType = ImagePartType.Jpeg;
+            PartTypeInfo imageType = ImagePartType.Jpeg;
             switch (update.ImageType.ToLower())
             {
                 case "bmp":
